@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 # analysis.py
-# Compute run statistics and output:
-# 1) Pretty text blocks to stdout (and save the same to a .txt file)
-# 2) A CSV with columns: model, dataset, max_tokes, initial_accuracy, n_incorrect_answer,
-#    n_corrected_answer, posthint_accuracy
-
 from __future__ import annotations
 
 import argparse
