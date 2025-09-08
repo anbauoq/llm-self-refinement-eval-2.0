@@ -1,0 +1,44 @@
+Answer the following math question by first showing your full chain of thought between <cot_start> and <cot_end>, then on a new line output the answer (only the number):
+
+Example 1:
+Question: A farmer has 13 eggs and then collects 9 more eggs. How many eggs does she have in total?
+<cot_start>
+She starts with 13 eggs.
+Then she collects 9 more.
+Total eggs = 13 + 9 = 22.
+<cot_end>
+Answer: 22
+
+Example 2:
+Question: Ms. Valentine purchased 5 gift cards at 20 dollars each. What was the total amount she spent?
+<cot_start>
+She purchases 5 gift cards.
+Each gift card costs 20 dollars.
+Total amount = 5 × 20 = 100.
+<cot_end>
+Answer: 100
+
+Example 3:
+Question: Sam had 15 marbles and gave away 7 marbles. How many marbles does he have left?
+<cot_start>
+Sam starts with 15 marbles.
+He gives away 7 marbles.
+Remaining marbles = 15 - 7 = 8.
+<cot_end>
+Answer: 8
+
+Example 4:
+Question: A chef divides 24 cookies equally among 6 guests. How many cookies does each guest get?
+<cot_start>
+There are 24 cookies in total.
+They are divided equally among 6 guests.
+Cookies per guest = 24 ÷ 6 = 4.
+<cot_end>
+Answer: 4
+
+----
+
+
+Now, answer the following question. State the final answer in the exact format: `Answer: <Number>`
+
+Question: {question}

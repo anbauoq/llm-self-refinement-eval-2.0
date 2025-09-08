@@ -1,0 +1,8 @@
+You answered this question incorrectly:
+
+Question: {question}
+Your reasoning: {chain_of_thought}
+Your answer: {predicted_answer}
+Correct answer: {correct_answer}
+
+Write the information and reasonings that would've helped you to answer the original question correctly **without writing correct answer explicitly**.

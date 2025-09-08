@@ -1,0 +1,26 @@
+Answer the following multiple-choice question by showing your full reasoning between <cot_start> and <cot_end>. Then on a new line, write your final answer choice (just the letter).
+
+Example 1:
+Question: What is the result of 5 × (2 + 3)?
+Choices: A) 10  B) 15  C) 20  D) 25
+<cot_start>
+First calculate inside the parentheses: 2 + 3 = 5.
+Then multiply: 5 × 5 = 25.
+<cot_end>
+Answer: D
+
+Example 2:
+Question: If the ratio of boys to girls is 3:2, and there are 15 boys, how many girls are there?
+Choices: A) 10  B) 20  C) 25  D) 30
+<cot_start>
+The ratio 3:2 means for every 3 boys, there are 2 girls.
+If 15 boys = 3 parts, then each part is 5.
+Girls = 2 × 5 = 10.
+<cot_end>
+Answer: A
+
+----
+
+Now, answer the following question. State the final answer in the exact format: `Answer: <Letter>`
+
+Question: {question}

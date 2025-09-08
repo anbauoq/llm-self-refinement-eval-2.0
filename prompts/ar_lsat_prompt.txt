@@ -1,0 +1,39 @@
+Answer the following logic puzzle question.
+
+**Instructions:**
+1.  Analyze the constraints and reason logically between <cot_start> and <cot_end>.
+2.  **Your reasoning must be in plain English. Do NOT write Python code.**
+3.  Keep your reasoning concise and to the point.
+4.  You MUST conclude your response with the final answer on a new line, formatted exactly as `Answer: <letter>`.
+
+Example 1:
+Question: If George can present only on Tuesday, and Olivia can’t present in the afternoon, who can present on Wednesday morning?
+Choices: A) George  B) Helen  C) Irving  D) Olivia  E) Kyle
+<cot_start>
+George can only present on Tuesday, so not on Wednesday.
+Olivia cannot present in the afternoon, but this is morning, so she is eligible.
+Still, other rules suggest Helen is more likely. This is option B.
+<cot_end>
+Answer: B
+
+Example 2
+Question: Five friends—Alex, Ben, Cara, Dana, and Evan—are sitting in a single row of five numbered seats (1 to 5). Cara is in the middle seat (seat 3), Ben is sitting at the far left end (seat 1), and Alex is sitting immediately next to Dana. If Alex is not sitting in the last seat (seat 5), who is sitting in seat 4?
+Choices: A) Alex B) Dana C) Evan D) Ben
+<cot_start>
+With Ben fixed in seat 1 and Cara in seat 3, the only adjacent open pair for Alex and Dana is seats 4 and 5.
+Since Alex is not in seat 5, Alex must be in seat 4. This is option A.
+<cot_end>
+Answer: A
+
+Example 3
+The presentation can be on Monday or Tuesday. George can only present on Tuesday. Olivia can only present on Monday. Who can present on Tuesday?
+Choices: A) Olivia B) Marina C) George
+<cot_start>
+The presentation is on Tuesday. Olivia is only available on Monday, so she cannot present. George is available on Tuesday. Therefore, George must be the presenter. This is option C.
+<cot_end>
+Answer: C
+----
+
+Now, answer the following question. State the final answer in the exact format: `Answer: <Letter>`
+
+Question: {question}

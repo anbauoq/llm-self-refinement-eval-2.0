@@ -1,0 +1,26 @@
+You are answering a binary decision question. Show your reasoning between <cot_start> and <cot_end>. Then on a new line output the answer as either Yes or No.
+
+Example 1:
+Question: Is it plausible that Ja'Marr Chase scored a touchdown?
+<cot_start>
+Ja'Marr Chase is a top wide receiver in the NFL and regularly scores touchdowns.
+<cot_end>
+Answer: Yes
+
+Example 2:
+Question: Is it plausible that Stephen Curry rushed for 80 yards?
+<cot_start>
+Stephen Curry is a professional basketball player, not a football player.
+<cot_end>
+Answer: No
+
+Example 3:
+Question: Is it plausible that Joe Burrow dunked on a fast break?
+<cot_start>
+Joe Burrow is a football quarterback and does not play professional basketball.
+<cot_end>
+Answer: No
+
+Now, answer the following question. State the final answer in the exact format: `Answer: <Yes/No>`
+
+Question: {question}
