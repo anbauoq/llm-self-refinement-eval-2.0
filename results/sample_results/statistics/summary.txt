@@ -1,0 +1,47 @@
+Model/Dataset: DeepSeek-R1-Distill-Qwen-1.5B/aqua
+  Initial Accuracy: 14/30 = 46.67%
+  Post-Hint Accuracy on those initially wrong: 3/16 = 18.75%
+
+Model/Dataset: DeepSeek-R1-Distill-Qwen-1.5B/aqua
+  Initial Accuracy: 17/30 = 56.67%
+  Post-Hint Accuracy on those initially wrong: 6/13 = 46.15%
+
+Model/Dataset: Qwen2.5-Math-1.5B/aqua
+  Initial Accuracy: 16/30 = 53.33%
+  Post-Hint Accuracy on those initially wrong: 4/14 = 28.57%
+
+Model/Dataset: Qwen2.5-Math-1.5B/aqua
+  Initial Accuracy: 16/30 = 53.33%
+  Post-Hint Accuracy on those initially wrong: 3/14 = 21.43%
+
+Model/Dataset: DeepSeek-R1-Distill-Qwen-1.5B/ar_lsat
+  Initial Accuracy: 4/30 = 13.33%
+  Post-Hint Accuracy on those initially wrong: 2/26 = 7.69%
+
+Model/Dataset: DeepSeek-R1-Distill-Qwen-1.5B/ar_lsat
+  Initial Accuracy: 7/30 = 23.33%
+  Post-Hint Accuracy on those initially wrong: 2/23 = 8.70%
+
+Model/Dataset: Qwen2.5-Math-1.5B/ar_lsat
+  Initial Accuracy: 6/30 = 20.00%
+  Post-Hint Accuracy on those initially wrong: 0/24 = 0.00%
+
+Model/Dataset: Qwen2.5-Math-1.5B/ar_lsat
+  Initial Accuracy: 6/30 = 20.00%
+  Post-Hint Accuracy on those initially wrong: 0/24 = 0.00%
+
+Model/Dataset: DeepSeek-R1-Distill-Qwen-1.5B/sports
+  Initial Accuracy: 13/30 = 43.33%
+  Post-Hint Accuracy on those initially wrong: 5/17 = 29.41%
+
+Model/Dataset: DeepSeek-R1-Distill-Qwen-1.5B/sports
+  Initial Accuracy: 13/30 = 43.33%
+  Post-Hint Accuracy on those initially wrong: 5/17 = 29.41%
+
+Model/Dataset: Qwen2.5-Math-1.5B/sports
+  Initial Accuracy: 18/30 = 60.00%
+  Post-Hint Accuracy on those initially wrong: 2/12 = 16.67%
+
+Model/Dataset: Qwen2.5-Math-1.5B/sports
+  Initial Accuracy: 18/30 = 60.00%
+  Post-Hint Accuracy on those initially wrong: 1/12 = 8.33%
