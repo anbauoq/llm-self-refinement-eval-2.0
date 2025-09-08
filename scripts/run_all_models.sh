@@ -17,7 +17,7 @@ MODELS_REASONING=(
 
 DATASETS=( "ar_lsat" "asdiv" "aqua" "gsm8k" "sports" )
 
-TOKENS=(256 512 1024 2048)
+TOKENS=(1024 2048)
 INPUT_DIR="data"
 OUTPUT_DIR="results/all_results"
 
