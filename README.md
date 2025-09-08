@@ -16,7 +16,7 @@ The pipeline is executed in three automated stages for each model and dataset pa
    The model is presented with the same questions it initially failed, but this time, the self-generated hint is prepended to the prompt to measure if the hint leads to a correct answer.
 
 
-## 🚀 Getting Started
+## 🚀 How to Use It?
 
 ### 1. Setup
 
@@ -83,7 +83,7 @@ This will generate two summary files in the specified locations:
 
 
 ## 🛠️ Project Structure
-
+```
 .
 ├── data/                  # Input datasets
 ├── prompts/               # Prompt templates
@@ -97,3 +97,4 @@ This will generate two summary files in the specified locations:
 │   ├── run.py             # Main pipeline execution script
 │   └── utils.py           # Helper functions for I/O, parsing, etc.
 └── requirements.txt       # Project dependencies
+```
