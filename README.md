@@ -40,7 +40,7 @@ python src/run.py \
   --dataset "gsm8k" \
   --input_path "data/gsm8k.jsonl" \
   --output_dir "results/Qwen-Math-1.5B/gsm8k/max512" \
-  --max_tokens 512
+  --max_tokens 1024
 ```
 
 To simplify running multiple experiments, you can use the provided shell scripts located in the `scripts/` directory:
