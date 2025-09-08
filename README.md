@@ -15,7 +15,6 @@ The pipeline is executed in three automated stages for each model and dataset pa
 3. **Post-Hint Inference:**  
    The model is presented with the same questions it initially failed, but this time, the self-generated hint is prepended to the prompt to measure if the hint leads to a correct answer.
 
----
 
 ## 🚀 Getting Started
 
@@ -49,7 +48,6 @@ To simplify running multiple experiments, you can use the provided shell scripts
 - `scripts/run_sample_models.sh`: A quick script to test the pipeline on a small subset of models and datasets.  
 - `scripts/run_all_models.sh`: A comprehensive script to run the full evaluation across all predefined models and datasets.
 
----
 
 ### 3. Analyzing the Results
 
