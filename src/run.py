@@ -22,12 +22,17 @@ def load_dataset_module(dataset_name: str):
 
 def load_model_and_tokenizer(model_path: str, device_map: str):
     """Load the model and tokenizer with robust device handling."""
-    tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+    # Don't trust remote code for Microsoft Phi models (security concern)
+    trust_remote = "microsoft/Phi" not in model_path
+    if not trust_remote:
+        logging.warning(f"Disabling trust_remote_code for Microsoft Phi model: {model_path}")
+    
+    tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=trust_remote)
     
     common_kwargs = {
         "pretrained_model_name_or_path": model_path,
         "dtype": torch.float16,
-        "trust_remote_code": True,
+        "trust_remote_code": trust_remote,
     }
 
     if device_map == "auto":
