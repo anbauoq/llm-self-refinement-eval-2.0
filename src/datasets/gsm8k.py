@@ -2,11 +2,33 @@ import re
 from typing import Dict, Any
 
 def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
+    raw_answer = str(item["answer"])
+
+    # Extract the final answer after "####"
+    m = re.search(r"####\s*(.+?)\s*$", raw_answer)
+    if m:
+        final_answer = m.group(1).strip()
+    else:
+        # Fallback: last token of last non-empty line
+        lines = [l for l in raw_answer.splitlines() if l.strip()]
+        if not lines:
+            final_answer = ""
+        else:
+            last_line = lines[-1].strip()
+            final_answer = last_line.split()[-1]
+
+    # Canonicalize like _canon_number_variants
+    final_answer = final_answer.replace(" ", "")
+    final_answer = final_answer.replace("$", "").replace("%", "")
+    final_answer = final_answer.replace(",", "")
+
     return {
         "id": item.get("id"),
         "question": item["question"],
-        "answer": str(item["answer"]).strip()
+        "answer": final_answer,
+        "task_type": "arith_mc",
     }
+
 
 _NUM_RE = r"[-+]?\s*\$?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?\s*%?"
 
