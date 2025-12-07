@@ -10,7 +10,7 @@ from huggingface_hub import login, snapshot_download
 from tqdm import tqdm
 
 # Hugging Face token
-HF_TOKEN = "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"
+HF_TOKEN = "<MSK>"
 
 # All models used in the project
 MODELS_NON_REASONING = [

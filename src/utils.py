@@ -69,20 +69,24 @@ def format_hint_prompt(
 ) -> str:
     """
     Load and fill the hint generation prompt.
-    Chooses a template based on task_type, falls back to the generic one.
+    Chooses a template based on task_type.
     """
     task = (task_type or "").strip().lower()
 
-    # Adjust these paths to match the actual filenames you created
+    # Map task_type to the correct hint prompt file
     prompt_map = {
         "mc": "prompts/hint_prompt_mc.txt",
-
         "true/false": "prompts/hint_prompt_true_false.txt",
-
-        "arithmetic": "prompts/hint_prompt_arithmetic.txt"
+        "arithmetic": "prompts/hint_prompt_arithmetic.txt",
     }
 
-    template_path = Path(prompt_map.get(task, "prompts/hint_prompt.txt"))
+    if task not in prompt_map:
+        raise ValueError(
+            f"Unknown task_type={task_type!r} for hint prompt. "
+            f"Expected one of: {sorted(prompt_map.keys())}"
+        )
+
+    template_path = Path(prompt_map[task])
     template = template_path.read_text(encoding="utf-8")
 
     return template.format(
@@ -91,7 +95,6 @@ def format_hint_prompt(
         chain_of_thought=chain_of_thought.strip(),
         correct_answer=correct_answer.strip(),
     )
-
 
 
 # Parsing / validation
