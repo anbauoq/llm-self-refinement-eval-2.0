@@ -1,0 +1,26 @@
+You answered this question incorrectly.
+
+Question: {question}
+Your reasoning: {chain_of_thought}
+Your answer: {predicted_answer}
+Correct answer: {correct_answer}
+
+Your task:
+
+1. Figure out WHY your previous reasoning led to the wrong answer.
+2. Write a HINT that contains only the extra facts or reasoning patterns that would have helped you answer correctly if they had been included in the original question.
+
+IMPORTANT FORMAT RULES FOR THE HINT:
+- Do NOT say whether anything is correct or incorrect.
+- Do NOT use the words: "plausible", "implausible", "likely", "unlikely".
+- Do NOT write "Yes", "No", "True", "False", "correct", "incorrect", or "answer".
+- Do NOT mention "the correct answer", "your previous answer", or phrases like "you should answer ...".
+- Do NOT directly compute or state the final numerical result.
+- The hint must read like neutral background information or guidance, not a verdict.
+
+Focus on:
+- Clarifying what each quantity in the problem represents and how they relate.
+- Highlighting the correct operations and order of operations needed (e.g., which numbers to add, subtract, multiply, or divide first).
+- Pointing out important constraints, unit conversions, or intermediate steps that were overlooked or misapplied.
+
+Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no bullet points and no extra commentary.

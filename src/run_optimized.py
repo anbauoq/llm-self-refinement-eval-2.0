@@ -1,365 +1,201 @@
-from __future__ import annotations
-
-from typing import Any, Dict, Iterable, List, Optional
+#!/usr/bin/env python3
+# run_optimized.py - Faster inference with bfloat16, FlashAttention, and batching
 import torch
-from tqdm import tqdm
+import importlib
 import logging
+from argparse import ArgumentParser
+from pathlib import Path
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+from inference_optimized import solve_questions, generate_hints
+from utils import load_data, save_data
 
-from utils import (
-    format_prompt,
-    format_hint_prompt,
-    extract_cot,
-    is_valid_hint,
-    contains_bad_phrases,
-    exact_match,
-    _parse_max_new_tokens,
-)
-
-# --- Constants ---
-DEFAULT_SOLVE_MAX_TOKENS = 256
-DEFAULT_HINT_MAX_TOKENS = 128
-RETRY_SEED_BASE = 21
-DEFAULT_BATCH_SIZE = 8  # Process 8 samples at once
-
-logging.basicConfig(level=logging.INFO)
+# Set up a logger for better feedback
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+def load_dataset_module(dataset_name: str):
+    """Dynamically load the dataset module and handle potential errors."""
+    try:
+        return importlib.import_module(f"datasets.{dataset_name}")
+    except ImportError:
+        logging.error(f"Failed to import dataset module for '{dataset_name}'. Make sure 'datasets/{dataset_name}.py' exists.")
+        raise
 
-def _resolve_pad_eos(tokenizer) -> tuple[Optional[int], Optional[int]]:
-    """Pick safe pad/eos once and reuse."""
-    eos_id = getattr(tokenizer, "eos_token_id", None)
-    pad_id = getattr(tokenizer, "pad_token_id", None)
-    if pad_id is None:
-        pad_id = eos_id if eos_id is not None else 0
-    return pad_id, eos_id
-
-
-def _build_generation_kwargs(
-    tokenizer,
-    max_tokens: Optional[int],
-    default_tokens: int,
-    *,
-    is_retry: bool,
-    attempt_num: int,
-    temperature: float = 0.7,
-    top_p: float = 0.95,
-) -> Dict[str, Any]:
-    """Central builder for model.generate kwargs with batching support."""
-    pad_id, eos_id = _resolve_pad_eos(tokenizer)
-
-    gen_kwargs: Dict[str, Any] = {
-        "max_new_tokens": _parse_max_new_tokens(max_tokens, default=default_tokens),
-        "pad_token_id": pad_id,
-        "use_cache": True,
-        "do_sample": False,
+def load_model_and_tokenizer(model_path: str, device_map: str, use_flash_attention: bool = False, compile_model: bool = False):
+    """Load the model and tokenizer with optimizations for H100."""
+    logger.info(f"Loading model: {model_path}")
+    logger.info(f"Optimizations: FlashAttention={use_flash_attention}, Compile={compile_model}")
+    
+    # Don't trust remote code for Microsoft Phi models (security concern)
+    trust_remote = "microsoft/Phi" not in model_path
+    if not trust_remote:
+        logger.warning(f"Disabling trust_remote_code for Microsoft Phi model: {model_path}")
+    
+    tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=trust_remote)
+    
+    # Set pad_token if not set (required for batched inference)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+        logger.info(f"Set pad_token to eos_token: {tokenizer.eos_token}")
+    
+    # Set left padding for decoder-only models (required for correct batched generation)
+    tokenizer.padding_side = 'left'
+    logger.info(f"Set padding_side to 'left' for correct batched generation")
+    
+    # Use bfloat16 on H100 for better performance
+    dtype = torch.bfloat16 if torch.cuda.is_available() and torch.cuda.get_device_capability()[0] >= 8 else torch.float16
+    logger.info(f"Using dtype: {dtype}")
+    
+    common_kwargs = {
+        "pretrained_model_name_or_path": model_path,
+        "torch_dtype": dtype,
+        "trust_remote_code": trust_remote,
     }
-    if eos_id is not None:
-        gen_kwargs["eos_token_id"] = eos_id
+    
+    # Enable FlashAttention 2 if available (2-4x faster)
+    if use_flash_attention:
+        try:
+            common_kwargs["attn_implementation"] = "flash_attention_2"
+            logger.info("Attempting to use FlashAttention 2")
+        except Exception as e:
+            logger.warning(f"FlashAttention 2 not available: {e}")
+            common_kwargs["attn_implementation"] = "sdpa"  # Fallback to scaled dot product
+            logger.info("Using SDPA (scaled dot product attention)")
 
-    if is_retry:
-        torch.manual_seed(RETRY_SEED_BASE + attempt_num)
-        gen_kwargs.update(
-            do_sample=True,
-            temperature=temperature,
-            top_p=top_p,
+    if device_map == "auto":
+        model = AutoModelForCausalLM.from_pretrained(**common_kwargs, device_map="auto")
+    else:
+        if torch.cuda.is_available():
+            device = torch.device("cuda")
+        elif torch.backends.mps.is_available():
+            device = torch.device("mps")
+        else:
+            device = torch.device("cpu")
+        
+        logger.info(f"Using single device: {device}")
+        model = AutoModelForCausalLM.from_pretrained(**common_kwargs).to(device)
+
+    model.eval()
+    
+    # Optional: Compile model for additional ~30% speedup (requires PyTorch 2.0+)
+    if compile_model and hasattr(torch, 'compile'):
+        logger.info("Compiling model with torch.compile (first run will be slow)...")
+        try:
+            model = torch.compile(model, mode="reduce-overhead")
+            logger.info("Model compiled successfully")
+        except Exception as e:
+            logger.warning(f"Could not compile model: {e}")
+    
+    # Log GPU memory
+    if torch.cuda.is_available():
+        allocated = torch.cuda.memory_allocated() / 1024**3
+        reserved = torch.cuda.memory_reserved() / 1024**3
+        logger.info(f"GPU Memory: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved")
+    
+    return model, tokenizer
+
+def run_pipeline(args: ArgumentParser):
+    """Execute the main self-refinement pipeline with optimizations."""
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Define file paths
+    initial_results_path = output_dir / "initial_inference.jsonl"
+    hints_path = output_dir / "hints.jsonl"
+    post_hint_path = output_dir / "post_hint_inference.jsonl"
+
+    # --- Skip if final results already exist ---
+    if post_hint_path.exists():
+        logging.warning(f"Skipping pipeline for {args.model_path} on {args.dataset}: Final results already exist at {post_hint_path}")
+        return
+
+    # --- Load dependencies ---
+    logging.info(f"Loading dataset module: {args.dataset}")
+    dataset_module = load_dataset_module(args.dataset)
+    
+    logging.info(f"Loading model and tokenizer from: {args.model_path}")
+    model, tokenizer = load_model_and_tokenizer(
+        args.model_path, 
+        args.device_map,
+        use_flash_attention=args.use_flash_attention,
+        compile_model=args.compile_model
+    )
+
+    logging.info(f"Loading data from: {args.input_path}")
+    raw_data = load_data(args.input_path)
+    if args.max_samples:
+        raw_data = raw_data[:args.max_samples]
+        logging.info(f"Limiting to {args.max_samples} samples.")
+
+    # --- Stage 1: Initial Inference ---
+    if not initial_results_path.exists():
+        logging.info(f"Stage 1: Running initial inference with batch_size={args.batch_size}...")
+        initial_results = solve_questions(
+            raw_data, model, tokenizer, dataset_module, 
+            max_tokens=args.max_tokens,
+            batch_size=args.batch_size
         )
+        save_data(initial_results, initial_results_path)
+    else:
+        logging.info("Stage 1: Loading existing initial inference results.")
+        initial_results = load_data(initial_results_path)
 
-    return gen_kwargs
+    wrong_only = [ex for ex in initial_results if not ex.get("is_correct", False)]
+    logging.info(f"Found {len(wrong_only)} incorrect answers for hint generation.")
 
+    if not wrong_only:
+        logging.info("No incorrect answers found. Pipeline finished.")
+        return
 
-def _batch_data(data: List, batch_size: int) -> List[List]:
-    """Split data into batches."""
-    return [data[i:i + batch_size] for i in range(0, len(data), batch_size)]
-
-
-def _strip_prompt_from_outputs(
-    output_ids: torch.Tensor,
-    prompt_length: int,
-) -> torch.Tensor:
-    """
-    Strip the prompt tokens from the generated sequence.
-
-    Works for decoder-only models with padding on either side, and is safe-ish
-    for encoder-decoder models (falls back to returning the whole output if
-    it's shorter than prompt_length).
-    """
-    if output_ids.size(0) > prompt_length:
-        return output_ids[prompt_length:]
-    return output_ids
-
-
-
-def solve_questions(
-    data: Iterable[Dict[str, Any]],
-    model,
-    tokenizer,
-    dataset_module,
-    inject_hint: bool = False,
-    max_attempts: int = 2,
-    max_tokens: Optional[int] = None,
-    batch_size: int = DEFAULT_BATCH_SIZE,
-) -> List[Dict[str, Any]]:
-    """
-    Batched inference for faster processing, with per-item retries.
-    """
-    data_list = list(data) #just making a list of dictionaries, our dataset, each dict is one question with its corresponding features
-    results: List[Dict[str, Any]] = [] # just initializing object where results will be stored?
-    dataset_name = dataset_module.__name__.split(".")[-1] # since dataset_module is given by utils.asdiv, extracting dataset name in this way
-
-    # Process in batches
-    batches = _batch_data(data_list, batch_size) # dividing our data into batches, list of lists, each of which contains batch_size dictionaries
-
-    with torch.inference_mode(): # so gradients are not tracked -> optimization of memory
-        retry_suffix_text = (
-            "\nPlease provide a step-by-step breakdown and end with your final answer."
+    # --- Stage 2: Hint Generation ---
+    if not hints_path.exists():
+        logging.info(f"Stage 2: Generating hints with batch_size={args.batch_size}...")
+        hint_results = generate_hints(
+            wrong_only, model, tokenizer, 
+            max_tokens=args.max_tokens,
+            batch_size=args.batch_size
         )
-        retry_suffix_ids: List[int] = tokenizer(
-            retry_suffix_text,
-            add_special_tokens=False,
-        )["input_ids"]
+        save_data(hint_results, hints_path)
+    else:
+        logging.info("Stage 2: Loading existing hints.")
+        hint_results = load_data(hints_path)
 
-        for batch in tqdm(batches, desc=f"Solving questions (batch_size={batch_size})"): # outer loop, considering one batch at a time
-            
-            # Prepare batch: process items + base prompts (without retry suffix) 
-            processed_batch: List[Dict[str, Any]] = [] # initializing a list that is gonna contain each question processed - dictionaries with features we need
-            prompts_batch: List[str] = [] # initializing a list where generated prompts are going to be stored
+    # --- Stage 3: Post-hint Re-inference ---
+    logging.info(f"Stage 3: Running post-hint inference with batch_size={args.batch_size}...")
+    post_results = solve_questions(
+        hint_results, model, tokenizer, dataset_module, 
+        inject_hint=True, 
+        max_tokens=args.max_tokens,
+        batch_size=args.batch_size
+    )
+    save_data(post_results, post_hint_path)
 
-            for item in batch: # considering one question (dictionary) at a time, want to build the data structure that contains everything for further inference!
-                # Process item
-                if "ground_truth" not in item: # when doing our first step and the data is not procecessed yet, i.e. no ground_truth etc etc
-                    
-                    processed = dataset_module.process_item(item)
-                    
-                else: # when doing step 3 everything is already processed
-                    processed = {
-                        "id": item["id"],
-                        "question": item["question"],
-                        "answer": item["ground_truth"],
-                    }
-
-                # just creating prompt
-                base_prompt = format_prompt(
-                    processed["question"],
-                    inject_hint=inject_hint,
-                    hint=item.get("hint_sentence", ""),
-                    dataset_name=dataset_name,
-                )
-
-                processed_batch.append(processed) # must have a list with all questions from the given batch
-                prompts_batch.append(base_prompt) # here corresponding prompts must be added
+    logging.info(f"All done. Results saved to {output_dir}")
 
 
-            
-            # pre-tokenize base prompts once per batch ---
-            base_encoded = tokenizer( 
-                prompts_batch,
-                add_special_tokens=True,
-                return_tensors=None,
-                padding=False
-            )
-
-            
-            base_input_ids: List[List[int]] = base_encoded["input_ids"] # tokenizations for all questions in the current batch
-
-            
-
-
-            batch_size_actual = len(batch) # just for the case when last batch is smaller
-            
-            # One slot per item in the batch; None means "still unresolved"
-            
-            batch_results: List[Optional[Dict[str, Any]]] = [None] * batch_size_actual # keeping status weather pred_answer succesfully extracted or no, initially oll are not so None
-            
-            pending_indices = list(range(batch_size_actual)) # initially all indices, all questions are pending (unanswered)
-
-            for attempt in range(max_attempts):
-
-                # where im going to come at the lasttttttt
-                if not pending_indices:
-                    break  # all items in this batch have been resolved
-
-                # yeah
-                is_retry = attempt > 0
-
-                # Build tokenized inputs only for unresolved items (no re-tokenizing full text)
-                current_input_ids: List[List[int]] = []
-                current_indices: List[int] = []
-                for idx in pending_indices:
-                    ids = list(base_input_ids[idx])  # copy to avoid mutating base
-                    if is_retry:
-                        ids = ids + retry_suffix_ids
-                    if len(ids) > 2048:
-                        ids = ids[:2048]
-                    current_input_ids.append(ids)
-                    current_indices.append(idx)
-
-                # Pad unresolved inputs to tensor form
-                padded = tokenizer.pad(
-                    {"input_ids": current_input_ids},
-                    padding=True,
-                    return_tensors="pt",
-                )
-                inputs = {k: v.to(model.device) for k, v in padded.items()}
-
-                # All rows have the same sequence length after padding
-                prompt_length = inputs["input_ids"].shape[1]
-
-                gen_kwargs = _build_generation_kwargs(
-                    tokenizer=tokenizer,
-                    max_tokens=max_tokens,
-                    default_tokens=DEFAULT_SOLVE_MAX_TOKENS,
-                    is_retry=is_retry,
-                    attempt_num=attempt,
-                    temperature=0.7,
-                    top_p=0.95,
-                )
-
-                # Generate for unresolved subset
-                output_ids = model.generate(**inputs, **gen_kwargs)
-
-                # Decode and update only unresolved items
-                for local_idx, output in enumerate(output_ids):
-                    global_idx = current_indices[local_idx]
-                    processed = processed_batch[global_idx]
-
-                    new_ids = _strip_prompt_from_outputs(output, prompt_length)
-                    trimmed_decoded = tokenizer.decode(
-                        new_ids, skip_special_tokens=True
-                    ).strip()
-
-                    pred_answer = dataset_module.extract_answer(trimmed_decoded) or ""
-                    if not pred_answer:
-                        continue
-
-                    cot = extract_cot(trimmed_decoded)
-                    is_correct = exact_match(processed["answer"], pred_answer)
-
-                    batch_results[global_idx] = {
-                        "id": processed["id"],
-                        "question": processed["question"],
-                        "chain_of_thought": cot,
-                        "full_output": trimmed_decoded,
-                        "ground_truth": processed["answer"],
-                        "predicted_answer": pred_answer,
-                        "is_correct": is_correct,
-                    }
-
-                # Keep only those still unresolved for the next attempt
-                pending_indices = [i for i in pending_indices if batch_results[i] is None]
-
-            # Fill in failures for items that never produced a valid answer
-            for idx, res in enumerate(batch_results):
-                if res is None:
-                    processed = processed_batch[idx]
-                    batch_results[idx] = {
-                        "id": processed["id"],
-                        "question": processed["question"],
-                        "chain_of_thought": False,
-                        "full_output": False,
-                        "ground_truth": processed["answer"],
-                        "predicted_answer": False,
-                        "is_correct": False
-                    }
-
-            # Extend global results in batch order
-            results.extend(batch_results)
-
-    return results
+def main():
+    parser = ArgumentParser(description="Run self-refinement evaluation pipeline with optimizations.")
+    parser.add_argument("--model_path", type=str, required=True, help="Model checkpoint or HuggingFace model ID")
+    parser.add_argument("--dataset", type=str, required=True, help="Dataset name (matches datasets/*.py)")
+    parser.add_argument("--input_path", type=str, required=True, help="Path to input dataset file")
+    parser.add_argument("--output_dir", type=str, required=True, help="Where to store result JSONLs")
+    parser.add_argument("--max_samples", type=int, default=None, help="Optional limit on number of examples")
+    parser.add_argument("--device_map", type=str, default="auto", choices=["auto", "single"],
+                        help='Use "auto" (Accelerate sharding) or "single" (one device: cuda/mps/cpu).')
+    parser.add_argument("--max_tokens", type=int, default=256,
+                        help='Max new tokens per generation.')
+    parser.add_argument("--batch_size", type=int, default=8,
+                        help='Batch size for inference (default: 8). Increase for faster inference if GPU memory allows.')
+    parser.add_argument("--use_flash_attention", action="store_true", default=False,
+                        help='Use FlashAttention 2 for 2-4x speedup (default: False)')
+    parser.add_argument("--no_flash_attention", dest="use_flash_attention", action="store_false",
+                        help='Disable FlashAttention')
+    parser.add_argument("--compile_model", action="store_true",
+                        help='Use torch.compile for additional ~30%% speedup (first run will be slower)')
+    
+    args = parser.parse_args()
+    run_pipeline(args)
 
 
-def generate_hints(
-    data: Iterable[Dict[str, Any]],
-    model,
-    tokenizer,
-    num_attempts: int = 3,
-    temperature: float = 0.7,
-    max_tokens: Optional[int] = None,
-    batch_size: int = DEFAULT_BATCH_SIZE,
-) -> List[Dict[str, Any]]:
-    """
-    Batched hint generation with per-item retries and proper fallback to last decoded hint.
-    """
-    data_list = list(data)
-    hints: List[Dict[str, Any]] = []
-
-    batches = _batch_data(data_list, batch_size)
-
-    with torch.inference_mode():
-        for batch in tqdm(batches, desc=f"Generating hints (batch_size={batch_size})"):
-            # Build base prompts for the entire batch (one per item)
-            prompts_batch: List[str] = []
-            for item in batch:
-                prompt = format_hint_prompt(
-                    item["question"],
-                    item.get("predicted_answer", ""),
-                    item.get("chain_of_thought", ""),
-                    item["ground_truth"],
-                )
-                prompts_batch.append(prompt)
-
-            batch_size_actual = len(batch)
-            batch_hints: List[Optional[Dict[str, Any]]] = [None] * batch_size_actual
-            pending_indices = list(range(batch_size_actual))
-            last_decoded: Dict[int, str] = {}
-
-            for attempt in range(num_attempts):
-                if not pending_indices:
-                    break
-
-                # Tokenize prompts only for unresolved items
-                current_prompts = [prompts_batch[i] for i in pending_indices]
-
-                inputs = tokenizer(
-                    current_prompts,
-                    return_tensors="pt",
-                    padding=True,
-                    truncation=True,
-                    max_length=2048,
-                ).to(model.device)
-
-                prompt_length = inputs["input_ids"].shape[1]
-
-                # For hints we want sampling every time -> is_retry=True
-                gen_kwargs = _build_generation_kwargs(
-                    tokenizer=tokenizer,
-                    max_tokens=max_tokens,
-                    default_tokens=DEFAULT_HINT_MAX_TOKENS,
-                    is_retry=True,
-                    attempt_num=attempt,
-                    temperature=temperature,
-                    top_p=0.95,
-                )
-
-                out_ids = model.generate(**inputs, **gen_kwargs)
-
-                # Decode and validate hints for unresolved items
-                for local_idx, output in enumerate(out_ids):
-                    global_idx = pending_indices[local_idx]
-                    item = batch[global_idx]
-
-                    new_ids = _strip_prompt_from_outputs(output, prompt_length)
-                    decoded = tokenizer.decode(
-                        new_ids, skip_special_tokens=True
-                    ).strip()
-
-                    # Remember last decoded attempt for fallback
-                    last_decoded[global_idx] = decoded
-
-                    if is_valid_hint(decoded, item["ground_truth"]):
-                        item_with_hint = item.copy()
-                        item_with_hint["hint_sentence"] = decoded
-                        batch_hints[global_idx] = item_with_hint
-
-                # Filter out those that already have a valid hint
-                pending_indices = [i for i in pending_indices if batch_hints[i] is None]
-
-            # Add items with last attempt's hint if validation failed
-            for idx, res in enumerate(batch_hints):
-                if res is None:
-                    item_with_hint = batch[idx].copy()
-                    item_with_hint["hint_sentence"] = last_decoded.get(idx, "")
-                    batch_hints[idx] = item_with_hint
-
-            hints.extend(batch_hints)
-
-    return hints
+if __name__ == "__main__":
+    main()

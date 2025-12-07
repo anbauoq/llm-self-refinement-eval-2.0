@@ -1,0 +1,27 @@
+You answered this question incorrectly.
+
+Question: {question}
+Your reasoning: {chain_of_thought}
+Your answer: {predicted_answer}
+Correct answer: {correct_answer}
+
+Your task:
+
+1. Figure out WHY your previous reasoning led to the wrong answer.
+2. Write a HINT that contains only the extra facts, clarifications, or reasoning patterns that would have helped you select the correct choice if they had been included in the original question.
+
+IMPORTANT FORMAT RULES FOR THE HINT:
+- Do NOT say whether anything is correct or incorrect.
+- Do NOT use the words: "plausible", "implausible", "likely", "unlikely".
+- Do NOT write "Yes", "No", "True", "False", "correct", "incorrect", or "answer".
+- Do NOT mention "the correct answer", "your previous answer", or phrases like "you should choose..." or "you should answer...".
+- Do NOT name or quote a specific option as being right or wrong (e.g., do NOT say "Option C is..." or "the third choice is...").
+- Do NOT directly compute or state the final result if the question involves numbers.
+- The hint must read like neutral background information or guidance, not a verdict.
+
+Focus on:
+- Clarifying exactly what the question is asking for and which information in the problem is relevant.
+- Explaining the key logical steps, comparisons, or computations needed to distinguish between the options.
+- Highlighting constraints, definitions, or subtle wording that rule out certain types of choices (for example, impossible values, wrong units, or contradictions with the given conditions).
+
+Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no bullet points and no extra commentary.

@@ -2,47 +2,65 @@ import re
 from typing import Dict, Any, List
 
 def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
-    choices = "\n".join(item["options"]) 
-    full_question = f"{item['question']}\nChoices:\n{choices}"
+    """
+    Process a single AR_LSAT item into internal format.
+
+    - `question`: context + blank line + question + options (one per line)
+    - `answer`: kept exactly as in the source item (no normalization)
+    - `task_type`: 'mc'
+    """
+    choices_block = "\n".join(item["options"])
+
+    full_question = (
+        item["context"] + "\n\n" +
+        item["question"] + "\n" +
+        choices_block
+    )
+
     return {
         "id": item.get("id"),
-        "question": f"{item['context']}\n\n{full_question}",
-        "answer": item["answer"].strip().upper()
+        "question": full_question,
+        "answer": item["answer"],   # no normalization, use as-is
+        "task_type": "mc",
     }
 
+
 def extract_answer(text: str) -> str:
-    if not text:
+    """
+    Extract final MCQ letter (A–E) from model output for AQuA-style prompts.
+
+    Priority:
+      1) Last <ans>...</ans> block (primary, expected path)
+      2) Anchored phrases like 'final answer is C'
+      3) Otherwise: 'no_final_answer'
+
+    Returns 'no_final_answer' if nothing usable is found.
+    """
+    if not text or not text.strip():
         return "no_final_answer"
 
-    t = text.strip()
+    raw = text
+    t = raw.strip()
 
-    # Unwrap special "Here is the answer … <|im_start|> … <|im_end|>" block if present
-    if "######Here is the answer" in t:
-        after = t.split("######Here is the answer", 1)[1]
-        m = re.search(r"<\|im_start\|>(.*?)<\|im_end\|>", after, flags=re.DOTALL | re.IGNORECASE)
-        t = m.group(1) if m else after
+    # 1) Prefer explicit <ans>...</ans> tag, take the LAST one
+    ans_blocks = re.findall(r"<ans>(.*?)</ans>", t, flags=re.IGNORECASE | re.DOTALL)
+    if ans_blocks:
+        candidate_block = ans_blocks[-1].strip()
 
-    # Prefer content after an explicit CoT terminator if you use one
-    if "<cot_end>" in t:
-        t = t.split("<cot_end>")[-1]
+        m_exact = re.fullmatch(r"[A-E]", candidate_block, flags=re.IGNORECASE)
+        if m_exact:
+            return m_exact.group(0).upper()
 
-    # Normalize whitespace for anchored scans
-    t_norm = re.sub(r"\s+", " ", t).strip()
 
-    # 1) Strong anchors (take LAST): Answer/Final/Correct/Choice/Option
-    anchor_re = r"(?:final\s*)?(?:answer|ans\.?|correct\s*answer|choice|option)\s*(?:is|:|=)?\s*[\*\(\[\{\"']*([A-E])[\)\]\}\"']*"
-    anchored = re.findall(anchor_re, t_norm, flags=re.IGNORECASE)
-
+    # 2) Strong anchored patterns (fallback if no <ans>)
+    anchored = re.findall(
+        r"(?:final\s*)?(?:answer|ans\.?|correct\s*answer)"
+        r"\s*(?:is|:|=)?\s*[\*\(\[\{\"']*([A-E])",
+        t,
+        flags=re.IGNORECASE,
+    )
     if anchored:
         return anchored[-1].upper()
 
-    # 2) Fallback: remove option-list lines so we don't pick letters from choices
-    t_no_choices = re.sub(r"(?im)^\s*choices?\s*:\s*$", "", t)
-    t_no_choices = re.sub(r"(?im)^\s*[A-E][\)\].:]\s.*$", "", t_no_choices)
-
-    # Generic standalone A–E tokens; take LAST
-    generic = re.findall(r"(?:^|\s)([A-E])(?=[\)\].,:;\s]|$)", t_no_choices, flags=re.IGNORECASE)
-    if generic:
-        return generic[-1].upper()
-
+    # 3) No safe signal - treat as no final answer
     return "no_final_answer"

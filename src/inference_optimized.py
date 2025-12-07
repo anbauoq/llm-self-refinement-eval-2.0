@@ -12,7 +12,6 @@ from utils import (
     format_hint_prompt,
     extract_cot,
     is_valid_hint,
-    contains_bad_phrases,
     exact_match,
     _parse_max_new_tokens,
 )
@@ -74,6 +73,23 @@ def _batch_data(data: List, batch_size: int) -> List[List]:
     return [data[i:i + batch_size] for i in range(0, len(data), batch_size)]
 
 
+def _strip_prompt_from_outputs(
+    output_ids: torch.Tensor,
+    prompt_length: int,
+) -> torch.Tensor:
+    """
+    Strip the prompt tokens from the generated sequence.
+
+    Works for decoder-only models with padding on either side, and is safe-ish
+    for encoder-decoder models (falls back to returning the whole output if
+    it's shorter than prompt_length).
+    """
+    if output_ids.size(0) > prompt_length:
+        return output_ids[prompt_length:]
+    return output_ids
+
+
+
 def solve_questions(
     data: Iterable[Dict[str, Any]],
     model,
@@ -85,60 +101,111 @@ def solve_questions(
     batch_size: int = DEFAULT_BATCH_SIZE,
 ) -> List[Dict[str, Any]]:
     """
-    Batched inference for faster processing.
+    Batched inference for faster processing, with per-item retries.
     """
-    data_list = list(data)
-    results: List[Dict[str, Any]] = []
-    dataset_name = dataset_module.__name__.split(".")[-1]
+    data_list = list(data) #just making a list of dictionaries, our dataset, each dict is one question with its corresponding features
+    results: List[Dict[str, Any]] = [] # just initializing object where results will be stored?
+    dataset_name = dataset_module.__name__.split(".")[-1] # since dataset_module is given by utils.asdiv, extracting dataset name in this way
 
     # Process in batches
-    batches = _batch_data(data_list, batch_size)
-    
-    with torch.inference_mode():
-        for batch in tqdm(batches, desc=f"Solving questions (batch_size={batch_size})"):
-            # Prepare batch
-            processed_batch = []
-            prompts_batch = []
+    batches = _batch_data(data_list, batch_size) # dividing our data into batches, list of lists, each of which contains batch_size dictionaries
+
+    with torch.inference_mode(): # so gradients are not tracked -> optimization of memory
+        retry_suffix_text = (
+            "\nPlease provide a step-by-step breakdown and end with your final answer."
+        )
+        retry_suffix_ids: List[int] = tokenizer(
+            retry_suffix_text,
+            add_special_tokens=False,
+        )["input_ids"]
+
+        for batch in tqdm(batches, desc=f"Solving questions (batch_size={batch_size})"): # outer loop, considering one batch at a time
             
-            for item in batch:
+            # Prepare batch: process items + base prompts (without retry suffix) 
+            processed_batch: List[Dict[str, Any]] = [] # initializing a list that is gonna contain each question processed - dictionaries with features we need
+            prompts_batch: List[str] = [] # initializing a list where generated prompts are going to be stored
+
+            for item in batch: # considering one question (dictionary) at a time, want to build the data structure that contains everything for further inference!
                 # Process item
-                if "ground_truth" not in item:
+                if "ground_truth" not in item: # when doing our first step and the data is not procecessed yet, i.e. no ground_truth etc etc
+                    
                     processed = dataset_module.process_item(item)
-                else:
+                    
+                else: # when doing step 3 everything is already processed
                     processed = {
                         "id": item["id"],
                         "question": item["question"],
                         "answer": item["ground_truth"],
+                        #task_type=item.get("task_type"),
                     }
-                
+
+                # just creating prompt
                 base_prompt = format_prompt(
                     processed["question"],
                     inject_hint=inject_hint,
                     hint=item.get("hint_sentence", ""),
                     dataset_name=dataset_name,
                 )
-                
-                processed_batch.append(processed)
-                prompts_batch.append(base_prompt)
+
+                processed_batch.append(processed) # must have a list with all questions from the given batch
+                prompts_batch.append(base_prompt) # here corresponding prompts must be added
+
+
             
-            # Process entire batch at once
-            batch_results = []
+            # pre-tokenize base prompts once per batch ---
+            base_encoded = tokenizer( 
+                prompts_batch,
+                add_special_tokens=True,
+                return_tensors=None,
+                padding=False
+            )
+
+            
+            base_input_ids: List[List[int]] = base_encoded["input_ids"] # tokenizations for all questions in the current batch
+
+            
+
+
+            batch_size_actual = len(batch) # just for the case when last batch is smaller
+            
+            # One slot per item in the batch; None means "still unresolved"
+            
+            batch_results: List[Optional[Dict[str, Any]]] = [None] * batch_size_actual # keeping status weather pred_answer succesfully extracted or no, initially oll are not so None
+            
+            pending_indices = list(range(batch_size_actual)) # initially all indices, all questions are pending (unanswered)
+
             for attempt in range(max_attempts):
+
+                # where im going to come at the lasttttttt
+                if not pending_indices:
+                    break  # all items in this batch have been resolved
+
+                # yeah
                 is_retry = attempt > 0
-                current_prompts = [p + ("\nPlease provide a step-by-step breakdown and end with your final answer." if is_retry else "") 
-                                 for p in prompts_batch]
-                
-                # Tokenize batch with padding
-                inputs = tokenizer(
-                    current_prompts,
-                    return_tensors="pt",
+
+                # Build tokenized inputs only for unresolved items (no re-tokenizing full text)
+                current_input_ids: List[List[int]] = []
+                current_indices: List[int] = []
+                for idx in pending_indices:
+                    ids = list(base_input_ids[idx])  # copy to avoid mutating base
+                    if is_retry:
+                        ids = ids + retry_suffix_ids
+                    if len(ids) > 2048:
+                        ids = ids[:2048]
+                    current_input_ids.append(ids)
+                    current_indices.append(idx)
+
+                # Pad unresolved inputs to tensor form
+                padded = tokenizer.pad(
+                    {"input_ids": current_input_ids},
                     padding=True,
-                    truncation=True,
-                    max_length=2048
-                ).to(model.device)
-                
-                input_lens = (inputs["attention_mask"].sum(dim=1)).tolist()
-                
+                    return_tensors="pt",
+                )
+                inputs = {k: v.to(model.device) for k, v in padded.items()}
+
+                # All rows have the same sequence length after padding
+                prompt_length = inputs["input_ids"].shape[1]
+
                 gen_kwargs = _build_generation_kwargs(
                     tokenizer=tokenizer,
                     max_tokens=max_tokens,
@@ -148,50 +215,59 @@ def solve_questions(
                     temperature=0.7,
                     top_p=0.95,
                 )
-                
-                # Generate for entire batch
+
+                # Generate for unresolved subset
                 output_ids = model.generate(**inputs, **gen_kwargs)
-                
-                # Decode each output
-                for idx, (output, input_len, processed) in enumerate(zip(output_ids, input_lens, processed_batch)):
-                    new_ids = output[input_len:]
-                    trimmed_decoded = tokenizer.decode(new_ids, skip_special_tokens=True).strip()
-                    
+
+                # Decode and update only unresolved items
+                for local_idx, output in enumerate(output_ids):
+                    global_idx = current_indices[local_idx]
+                    processed = processed_batch[global_idx]
+
+                    new_ids = _strip_prompt_from_outputs(output, prompt_length)
+                    trimmed_decoded = tokenizer.decode(
+                        new_ids, skip_special_tokens=True
+                    ).strip()
+
                     pred_answer = dataset_module.extract_answer(trimmed_decoded) or ""
-                    if pred_answer:
-                        cot = extract_cot(trimmed_decoded)
-                        is_correct = exact_match(processed["answer"], pred_answer)
-                        
-                        batch_results.append({
-                            "id": processed["id"],
-                            "question": processed["question"],
-                            "chain_of_thought": cot,
-                            "full_output": trimmed_decoded,
-                            "ground_truth": processed["answer"],
-                            "predicted_answer": pred_answer,
-                            "is_correct": is_correct,
-                        })
-                        break  # Success for this item
-                
-                if len(batch_results) == len(batch):
-                    break  # All items in batch succeeded
-            
-            # Add any remaining items that failed all attempts
-            while len(batch_results) < len(batch):
-                idx = len(batch_results)
-                processed = processed_batch[idx]
-                batch_results.append({
-                    "id": processed["id"],
-                    "question": processed["question"],
-                    "chain_of_thought": "",
-                    "full_output": "",
-                    "ground_truth": processed["answer"],
-                    "predicted_answer": "",
-                    "is_correct": False,
-                })
-            
+                    if not pred_answer:
+                        continue
+
+                    cot = extract_cot(trimmed_decoded)
+                    is_correct = exact_match(processed["answer"], pred_answer)
+
+                    batch_results[global_idx] = {
+                        "id": processed["id"],
+                        "question": processed["question"],
+                        "chain_of_thought": cot,
+                        "full_output": trimmed_decoded,
+                        "ground_truth": processed["answer"],
+                        "predicted_answer": pred_answer,
+                        "is_correct": is_correct,
+                        "task_type": processed.get("task_type"),  # <<< ADDED
+                    }
+
+                # Keep only those still unresolved for the next attempt
+                pending_indices = [i for i in pending_indices if batch_results[i] is None]
+
+            # Fill in failures for items that never produced a valid answer
+            for idx, res in enumerate(batch_results):
+                if res is None:
+                    processed = processed_batch[idx]
+                    batch_results[idx] = {
+                        "id": processed["id"],
+                        "question": processed["question"],
+                        "full_output": False,
+                        "chain_of_thought": False,
+                        "predicted_answer": False,
+                        "ground_truth": processed["answer"],
+                        "is_correct": False,
+                        "task_type": processed.get("task_type"),  # <<< ADDED
+                    }
+
+            # Extend global results in batch order
             results.extend(batch_results)
-    
+
     return results
 
 
@@ -205,38 +281,50 @@ def generate_hints(
     batch_size: int = DEFAULT_BATCH_SIZE,
 ) -> List[Dict[str, Any]]:
     """
-    Batched hint generation for faster processing.
+    Batched hint generation with per-item retries and proper fallback to last decoded hint.
     """
     data_list = list(data)
     hints: List[Dict[str, Any]] = []
-    
+
     batches = _batch_data(data_list, batch_size)
-    
+
     with torch.inference_mode():
         for batch in tqdm(batches, desc=f"Generating hints (batch_size={batch_size})"):
-            prompts_batch = []
+            # Build base prompts for the entire batch (one per item)
+            prompts_batch: List[str] = []
             for item in batch:
                 prompt = format_hint_prompt(
                     item["question"],
                     item.get("predicted_answer", ""),
                     item.get("chain_of_thought", ""),
                     item["ground_truth"],
+                    task_type=item.get("task_type"),
                 )
                 prompts_batch.append(prompt)
-            
-            batch_hints = []
+
+            batch_size_actual = len(batch)
+            batch_hints: List[Optional[Dict[str, Any]]] = [None] * batch_size_actual
+            pending_indices = list(range(batch_size_actual))
+            last_decoded: Dict[int, str] = {}
+
             for attempt in range(num_attempts):
-                # Tokenize batch
+                if not pending_indices:
+                    break
+
+                # Tokenize prompts only for unresolved items
+                current_prompts = [prompts_batch[i] for i in pending_indices]
+
                 inputs = tokenizer(
-                    prompts_batch,
+                    current_prompts,
                     return_tensors="pt",
                     padding=True,
                     truncation=True,
-                    max_length=2048
+                    max_length=2048,
                 ).to(model.device)
-                
-                input_lens = (inputs["attention_mask"].sum(dim=1)).tolist()
-                
+
+                prompt_length = inputs["input_ids"].shape[1]
+
+                # For hints we want sampling every time -> is_retry=True
                 gen_kwargs = _build_generation_kwargs(
                     tokenizer=tokenizer,
                     max_tokens=max_tokens,
@@ -245,31 +333,40 @@ def generate_hints(
                     attempt_num=attempt,
                     temperature=temperature,
                     top_p=0.95,
+                    no_repeat_ngram_size=4,
+                    repetition_penalty=1.05
                 )
-                
+
                 out_ids = model.generate(**inputs, **gen_kwargs)
-                
-                # Decode and validate hints
-                for idx, (output, input_len, item) in enumerate(zip(out_ids, input_lens, batch)):
-                    decoded = tokenizer.decode(output[input_len:], skip_special_tokens=True).strip()
-                    
-                    if is_valid_hint(decoded, item["ground_truth"]) and not contains_bad_phrases(decoded, item["ground_truth"]):
+
+                # Decode and validate hints for unresolved items
+                for local_idx, output in enumerate(out_ids):
+                    global_idx = pending_indices[local_idx]
+                    item = batch[global_idx]
+
+                    new_ids = _strip_prompt_from_outputs(output, prompt_length)
+                    decoded = tokenizer.decode(
+                        new_ids, skip_special_tokens=True
+                    ).strip()
+
+                    # Remember last decoded attempt for fallback
+                    last_decoded[global_idx] = decoded
+
+                    if is_valid_hint(decoded, item["ground_truth"]):
                         item_with_hint = item.copy()
                         item_with_hint["hint_sentence"] = decoded
-                        batch_hints.append(item_with_hint)
-                        break
-                
-                if len(batch_hints) == len(batch):
-                    break  # All hints validated
-            
-            # Add items with last attempt's hint if validation failed
-            while len(batch_hints) < len(batch):
-                idx = len(batch_hints)
-                item_with_hint = batch[idx].copy()
-                item_with_hint["hint_sentence"] = ""  # or use last decoded
-                batch_hints.append(item_with_hint)
-            
-            hints.extend(batch_hints)
-    
-    return hints
+                        batch_hints[global_idx] = item_with_hint
 
+                # Filter out those that already have a valid hint
+                pending_indices = [i for i in pending_indices if batch_hints[i] is None]
+
+            # Add items with last attempt's hint if validation failed
+            for idx, res in enumerate(batch_hints):
+                if res is None:
+                    item_with_hint = batch[idx].copy()
+                    item_with_hint["hint_sentence"] = last_decoded.get(idx, "")
+                    batch_hints[idx] = item_with_hint
+
+            hints.extend(batch_hints)
+
+    return hints

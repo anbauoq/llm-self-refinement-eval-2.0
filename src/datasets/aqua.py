@@ -2,58 +2,50 @@ import re
 from typing import Dict, Any
 
 def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
-    # Join choices into properly formatted multiple-choice format
-    choices = "\n".join(item["options"])
-    full_question = f"{item['question'].strip()}\nChoices:\n{choices}"
-    
+
     return {
         "id": item.get("id"),
-        "question": full_question,
-        "answer": item["answer"].strip().upper()
+        "question": item['question'],
+        "answer": item["answer"].strip().upper(),
+        "task_type": "mc",
     }
 
 def extract_answer(text: str) -> str:
     """
-    Return the final MCQ letter (A–E) from a model's output.
-    Priorities:
-      1) Unwrap special "######Here is the answer ... <|im_start|>...<|im_end|>" blocks
-      2) Strong anchors like 'answer:', 'final answer is', 'correct answer ='
-      3) Fallback: last standalone A–E token (after removing choice lines)
-    Fails closed with "".
+    Extract final MCQ letter (A–E) from model output for AQuA-style prompts.
+
+    Priority:
+      1) Last <ans>...</ans> block (primary, expected path)
+      2) Anchored phrases like 'final answer is C'
+      3) Otherwise: 'no_final_answer'
+
+    Returns 'no_final_answer' if nothing usable is found.
     """
-    if not text:
+    if not text or not text.strip():
         return "no_final_answer"
 
     raw = text
-
-    # 1) Unwrap special block if present
     t = raw.strip()
-    if "######Here is the answer" in t:
-        after = t.split("######Here is the answer", 1)[1]
-        m = re.search(r"<\|im_start\|>(.*?)<\|im_end\|>", after, flags=re.DOTALL | re.IGNORECASE)
-        t = m.group(1) if m else after
 
-    # normalize whitespace for anchored scans
-    t = re.sub(r"\s+", " ", t).strip()
+    # 1) Prefer explicit <ans>...</ans> tag, take the LAST one
+    ans_blocks = re.findall(r"<ans>(.*?)</ans>", t, flags=re.IGNORECASE | re.DOTALL)
+    if ans_blocks:
+        candidate_block = ans_blocks[-1].strip()
 
-    # 2) Strong, deterministic anchors (prefer the LAST one)
+        m_exact = re.fullmatch(r"[A-E]", candidate_block, flags=re.IGNORECASE)
+        if m_exact:
+            return m_exact.group(0).upper()
+
+
+    # 2) Strong anchored patterns (fallback if no <ans>)
     anchored = re.findall(
-        r"(?:final\s*)?(?:answer|ans\.?|correct\s*answer|choice|option)\s*(?:is|:|=)?\s*[\*\(\[\{\"']*([A-E])[\)\]\}\"']*",
+        r"(?:final\s*)?(?:answer|ans\.?|correct\s*answer)"
+        r"\s*(?:is|:|=)?\s*[\*\(\[\{\"']*([A-E])",
         t,
         flags=re.IGNORECASE,
     )
     if anchored:
         return anchored[-1].upper()
 
-    # 3) Fallback: generic tokens — but first remove option-list lines to avoid false positives
-    #    Strip lines like "A) foo", "B. bar", "C: baz" (case-insensitive), optionally after a "Choices:" header
-    t2 = raw
-    t2 = re.sub(r"(?:^|\n)\s*choices?\s*:\s*", "\n", t2, flags=re.IGNORECASE)
-    t2 = re.sub(r"(?:^|\n)\s*[A-E][\)\].:][^\n]*", "\n", t2, flags=re.IGNORECASE)
-
-    generic = re.findall(r"(?:^|\s)([A-E])(?=[\)\].,:;\s]|$)", t2, flags=re.IGNORECASE)
-    if generic:
-        return generic[-1].upper()
-
+    # 3) No safe signal - treat as no final answer
     return "no_final_answer"
-

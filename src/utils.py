@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional
+from typing import Any, Dict, Iterable, List, Mapping
 
 
 # I/O
@@ -65,17 +65,33 @@ def format_hint_prompt(
     predicted_answer: str,
     chain_of_thought: str,
     correct_answer: str,
+    task_type: str | None = None,
 ) -> str:
     """
-    Load and fill the general-purpose hint generation prompt.
+    Load and fill the hint generation prompt.
+    Chooses a template based on task_type, falls back to the generic one.
     """
-    template = Path("prompts/hint_prompt.txt").read_text(encoding="utf-8")
+    task = (task_type or "").strip().lower()
+
+    # Adjust these paths to match the actual filenames you created
+    prompt_map = {
+        "mc": "prompts/hint_prompt_mc.txt",
+
+        "true/false": "prompts/hint_prompt_true_false.txt",
+
+        "arithmetic": "prompts/hint_prompt_arithmetic.txt"
+    }
+
+    template_path = Path(prompt_map.get(task, "prompts/hint_prompt.txt"))
+    template = template_path.read_text(encoding="utf-8")
+
     return template.format(
         question=question.strip(),
         predicted_answer=predicted_answer.strip(),
         chain_of_thought=chain_of_thought.strip(),
         correct_answer=correct_answer.strip(),
     )
+
 
 
 # Parsing / validation

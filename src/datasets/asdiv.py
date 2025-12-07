@@ -1,85 +1,71 @@
 import re
 from typing import Dict, Any
 
+def _normalize_number_token(s: str) -> str:
+    """
+    Normalize numeric string for comparison:
+      - strip spaces
+      - remove $, %
+      - remove commas
+      - treat patterns like '1.300' as 1300 (dot as thousands sep),
+        but leave genuine decimals like '1.3' alone.
+    """
+    s = s.strip().replace(" ", "")
+    s = s.replace("$", "").replace("%", "").replace(",", "")
+
+    # thousands pattern: digits '.' exactly 3 digits (e.g., 1.300, 12.000)
+    m = re.fullmatch(r"(-?\d+)\.(\d{3})", s)
+    if m:
+        return m.group(1) + m.group(2)
+
+    return s
+
+
 def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
+    raw_answer = str(item["answer"]).strip()
+    norm_answer = _normalize_number_token(raw_answer)
+
     return {
         "id": item.get("id"),
         "question": item["question"],
-        "answer": str(item["answer"]).strip()
+        "answer": norm_answer,
+        "task_type": "arithmetic",
     }
 
 
-_NUM_RE = r"[-+]?\s*\$?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?\s*%?"
-
-def _canon_number_variants(s: str):
-    """
-    From a raw numeric token, produce ordered unique variants as strings:
-      - canonical (no commas/$/%/spaces)
-      - integer cast if decimal (e.g., '12.0' -> '12')
-      - 'thousands-dot' variant (remove dot entirely) if applicable ('1.234' -> '1234')
-    """
-    v = s.strip()
-    # strip wrappers/symbols
-    v = v.replace(" ", "")
-    v = v.replace("$", "").replace("%", "")
-    v = v.replace(",", "")
-
-    out = []
-    def add(x):
-        if x not in out:
-            out.append(x)
-
-    add(v)
-
-    # if decimal, add int(float(...)) (handles '12.0' -> '12')
-    if "." in v:
-        try:
-            add(str(int(float(v))))
-        except ValueError:
-            pass
-        # treat dot as thousands separator (e.g., '1.234' -> '1234')
-        dotless = v.replace(".", "")
-        if dotless and dotless != v:
-            add(dotless)
-
-    return out
-
 def extract_answer(text: str) -> str:
     """
-    Extract a numeric answer from model output.
+    Generic numeric extractor for GSM/ASDiv-style prompts.
+
     Priority:
-      1) Unwrap special '######Here is the answer' block with <|im_start|>...<|im_end|>
-      2) Anchored numeric after 'Answer'/'Final answer' markers (return LAST)
-      3) Fallback to LAST numeric in the text
-    Returns newline-separated variants to maximize exact_match success.
+      1) Last <ans>...</ans> block
+      2) Anchored phrases like 'final answer is 42'
+      3) Else: 'no_final_answer'
     """
-    if not text:
+    if not text or not text.strip():
         return "no_final_answer"
 
     raw = text
-
-    # 1) Unwrap special block (if present)
     t = raw.strip()
-    if "######Here is the answer" in t:
-        after = t.split("######Here is the answer", 1)[1]
-        m = re.search(r"<\|im_start\|>(.*?)<\|im_end\|>", after, flags=re.DOTALL | re.IGNORECASE)
-        t = m.group(1) if m else after
-    # normalize whitespace for anchor scan
-    t_norm = re.sub(r"\s+", " ", t).strip()
 
-    # 2) Anchored scan (prefer LAST)
+    # 1) <ans>...</ans>, take LAST one
+    ans_blocks = re.findall(r"<ans>(.*?)</ans>", t, flags=re.IGNORECASE | re.DOTALL)
+    if ans_blocks:
+        candidate = ans_blocks[-1].strip()
+        m = re.search(r"[-+]?\$?\d+(?:[.,]\d+)?%?", candidate)
+        if m:
+            return _normalize_number_token(m.group(0))
+        return "no_final_answer"
+
+    # 2) backup: 'final answer is 42', 'answer: $1,300%', etc.
     anchored = re.findall(
-        rf"(?:final\s*)?(?:answer|ans\.?|result|correct\s*answer)\s*(?:is|:|=)?\s*({_NUM_RE})",
-        t_norm,
+        r"(?:final\s*)?(?:answer|ans\.?|correct\s*answer)"
+        r"\s*(?:is|:|=)?\s*([-+]?\$?\d+(?:[.,]\d+)?%?)",
+        t,
         flags=re.IGNORECASE,
     )
     if anchored:
-        variants = _canon_number_variants(anchored[-1])
-        return "\n".join(variants)
+        return _normalize_number_token(anchored[-1])
 
-    # 3) Fallback: last numeric anywhere
-    nums = re.findall(_NUM_RE, t, flags=re.IGNORECASE)
-    if not nums:
-        return "no_final_answer"
-    variants = _canon_number_variants(nums[-1])
-    return "\n".join(variants)
+    # 3) do NOT guess from random numbers in the whole text
+    return "no_final_answer"

@@ -1,39 +1,193 @@
-Answer the following logic puzzle question.
+Answer the following LSAT-style multiple-choice question by showing your full reasoning between <cot_start> and <cot_end>. 
+Then on a new line, write your final answer choice between <ans> </ans>.
 
-**Instructions:**
-1.  Analyze the constraints and reason logically between <cot_start> and <cot_end>.
-2.  **Your reasoning must be in plain English. Do NOT write Python code.**
-3.  Keep your reasoning concise and to the point.
-4.  You MUST conclude your response with the final answer on a new line, formatted exactly as `Answer: <letter>`.
+Important:
+- The choices are always labeled A), B), C), D), E).
+- Inside <ans> </ans> you must output ONLY a single capital letter: A, B, C, D, or E. No extra text.
 
 Example 1:
-Question: If George can present only on Tuesday, and Olivia can’t present in the afternoon, who can present on Wednesday morning?
-Choices: A) George  B) Helen  C) Irving  D) Olivia  E) Kyle
+Question: Five speakers—Alex, Blair, Casey, Devin, and Erin—will each give one talk at a one-day conference. The conference has five consecutive time slots, numbered 1 through 5, from earliest to latest. The following conditions apply:
+1. Alex speaks earlier than Blair.
+2. Casey speaks immediately before Devin.
+3. Erin does not speak in the first time slot.
+Which one of the following could be the order of the speakers from the first to the fifth time slot?
+A) Slot 1: Alex;  Slot 2: Blair;  Slot 3: Devin; Slot 4: Casey; Slot 5: Erin
+B) Slot 1: Erin;  Slot 2: Alex;  Slot 3: Casey; Slot 4: Devin; Slot 5: Blair
+C) Slot 1: Casey; Slot 2: Devin; Slot 3: Alex;  Slot 4: Blair; Slot 5: Erin
+D) Slot 1: Casey; Slot 2: Alex;  Slot 3: Devin; Slot 4: Blair; Slot 5: Erin
+E) Slot 1: Blair; Slot 2: Alex;  Slot 3: Casey; Slot 4: Devin; Slot 5: Erin
 <cot_start>
-George can only present on Tuesday, so not on Wednesday.
-Olivia cannot present in the afternoon, but this is morning, so she is eligible.
-Still, other rules suggest Helen is more likely. This is option B.
-<cot_end>
-Answer: B
+Check option C carefully.
 
-Example 2
-Question: Five friends—Alex, Ben, Cara, Dana, and Evan—are sitting in a single row of five numbered seats (1 to 5). Cara is in the middle seat (seat 3), Ben is sitting at the far left end (seat 1), and Alex is sitting immediately next to Dana. If Alex is not sitting in the last seat (seat 5), who is sitting in seat 4?
-Choices: A) Alex B) Dana C) Evan D) Ben
-<cot_start>
-With Ben fixed in seat 1 and Cara in seat 3, the only adjacent open pair for Alex and Dana is seats 4 and 5.
-Since Alex is not in seat 5, Alex must be in seat 4. This is option A.
-<cot_end>
-Answer: A
+In option C, Casey is in slot 1 and Devin is in slot 2, so Casey is immediately before Devin. That satisfies condition 2.
+Erin is in slot 5, so Erin is not in the first slot. That satisfies condition 3.
+Alex is in slot 3 and Blair in slot 4, so Alex speaks earlier than Blair. That satisfies condition 1.
+All three conditions are satisfied, so option C could be the schedule.
 
-Example 3
-The presentation can be on Monday or Tuesday. George can only present on Tuesday. Olivia can only present on Monday. Who can present on Tuesday?
-Choices: A) Olivia B) Marina C) George
-<cot_start>
-The presentation is on Tuesday. Olivia is only available on Monday, so she cannot present. George is available on Tuesday. Therefore, George must be the presenter. This is option C.
+Now check that the other options violate at least one condition:
+- In A, Casey is not immediately before Devin (Devin is before Casey), so condition 2 fails.
+- In B, Erin is in the first slot, so condition 3 fails.
+- In D, Casey is not immediately before Devin (there is Alex between them), so condition 2 fails.
+- In E, Alex does not speak earlier than Blair, so condition 1 fails.
+
+Therefore, only option C could be the schedule.
 <cot_end>
-Answer: C
+<ans>C</ans>
+
+Example 2:
+Question: Four workshops—Data, Ethics, Finance, and Law—are scheduled, one per day, on four consecutive days from Monday through Thursday. Each workshop is held exactly once. The following conditions apply:
+1. Data is held earlier in the week than Finance.
+2. Ethics is not held on Monday.
+3. Law is not held on Thursday.
+Which one of the following could be the schedule of workshops from Monday through Thursday?
+A) Mon: Data;  Tue: Ethics; Wed: Law;   Thu: Finance
+B) Mon: Ethics; Tue: Finance; Wed: Data;  Thu: Law
+C) Mon: Data;  Tue: Law;    Wed: Finance; Thu: Ethics
+D) Mon: Finance; Tue: Data; Wed: Ethics;  Thu: Law
+E) Mon: Law;    Tue: Finance; Wed: Ethics; Thu: Data
+<cot_start>
+Check option A.
+
+In A, Data is on Monday and Finance is on Thursday, so Data is earlier in the week than Finance. That satisfies condition 1.
+Ethics is on Tuesday, so it is not on Monday. That satisfies condition 2.
+Law is on Wednesday, so it is not on Thursday. That satisfies condition 3.
+All conditions are satisfied, so A could be the schedule.
+
+Now verify that the other options violate at least one condition:
+- In B, Ethics is on Monday, which violates condition 2.
+- In C, Data is on Monday and Finance is on Wednesday, so Data is earlier than Finance, but Law is on Thursday, which violates condition 3.
+- In D, Finance is on Monday and Data is on Tuesday, so Data is not earlier than Finance, which violates condition 1.
+- In E, Data is on Thursday and Finance is on Tuesday, so Data is not earlier than Finance, which violates condition 1.
+
+Therefore, only option A could be the schedule.
+<cot_end>
+<ans>A</ans>
+
+Example 3:
+Question: A committee of exactly three people is to be formed from four candidates: Rosa, Sam, Tariq, and Uma. The following conditions apply:
+1. Sam must be on the committee.
+2. If Rosa is on the committee, Tariq is not on the committee.
+3. Uma cannot be on the committee unless Rosa is also on the committee.
+Which of the following could be the complete set of committee members?
+A) Rosa, Sam, Tariq
+B) Sam, Tariq, Uma
+C) Rosa, Sam, Uma
+D) Sam only
+E) Rosa, Tariq, Uma
+<cot_start>
+The committee must have exactly three people, and Sam must be on it.
+
+Consider option C: Rosa, Sam, Uma.
+Sam is on the committee, so condition 1 is satisfied.
+Rosa is on the committee, and Tariq is not, so condition 2 is satisfied.
+Uma is on the committee, and Rosa is also on the committee, so condition 3 is satisfied.
+All three conditions are satisfied, so option C could be the committee.
+
+Now check the other options:
+- A: Rosa, Sam, Tariq. Rosa is on the committee and Tariq is also on it, which violates condition 2.
+- B: Sam, Tariq, Uma. Uma is on the committee but Rosa is not, which violates condition 3.
+- D: Sam only. This has only one member, not exactly three, so it violates the requirement of three people.
+- E: Rosa, Tariq, Uma. Sam is missing, so condition 1 is violated, and Tariq and Rosa together also violate condition 2.
+
+Therefore, only option C could be the committee.
+<cot_end>
+<ans>C</ans>
+
+Example 4:
+Question: Three houses—A, B, and C—are each painted a different color, chosen from exactly red, green, and blue. No two houses share the same color. The following conditions apply:
+1. House A is not painted red.
+2. House B is not painted blue.
+3. House C is painted either green or blue.
+Which one of the following could be the assignment of colors to the houses A, B, and C?
+A) A: red;    B: green; C: blue
+B) A: red;    B: blue;  C: green
+C) A: green;  B: red;   C: blue
+D) A: blue;   B: blue;  C: red
+E) A: green;  B: blue;  C: red
+<cot_start>
+Check option C.
+
+In C, A is green, B is red, and C is blue.
+House A is not red, so condition 1 is satisfied.
+House B is not blue, so condition 2 is satisfied.
+House C is blue, which is allowed because C must be green or blue, so condition 3 is satisfied.
+All three houses have different colors, so the "all different" requirement is satisfied too.
+Thus option C could be the assignment.
+
+Now check that all other options violate at least one condition:
+- A: A is red, which violates condition 1.
+- B: A is red and B is blue, so both condition 1 and condition 2 are violated.
+- D: B and C are not all different colors because B is blue and C is red, and also B is blue which violates condition 2.
+- E: B is blue, which violates condition 2.
+
+Therefore, only option C could be the assignment of colors.
+<cot_end>
+<ans>C</ans>
+
+Example 5:
+Question: Three packages—J, K, and L—are each shipped on a different day, on three consecutive days from Monday through Wednesday. The following conditions apply:
+1. K is shipped earlier than J.
+2. L is not shipped on Monday.
+Which one of the following must be true?
+A) J is shipped on Monday.
+B) J is shipped on Wednesday.
+C) K is shipped on Monday.
+D) L is shipped on Tuesday.
+E) L is shipped on Wednesday.
+<cot_start>
+List possible orders that satisfy the rules.
+
+Since K must be earlier than J and L cannot be on Monday, consider the possibilities:
+- If K is on Monday, J and L can be on Tuesday and Wednesday in either order. That gives:
+  1) Mon: K, Tue: J, Wed: L
+  2) Mon: K, Tue: L, Wed: J
+Both of these satisfy the rules: K is before J, and L is not on Monday.
+
+If K is on Tuesday, then J must be on Wednesday for K to be earlier than J. That would force L onto Monday, which is not allowed. So K cannot be on Tuesday.
+If K is on Wednesday, there is no later day for J, so K cannot be on Wednesday.
+
+Therefore, in every valid schedule K must be on Monday.
+
+So the statement “K is shipped on Monday” must be true, which corresponds to option C.
+<cot_end>
+<ans>C</ans>
+
+Example 6:
+Question: Four books—G, H, J, and K—are to be arranged in a row on a shelf from left to right. Each position holds exactly one book. The following conditions apply:
+1. H is somewhere to the left of J.
+2. K is immediately to the right of H.
+3. G is not at either end of the row.
+Which one of the following could be the order of the books from left to right?
+A) G, H, K, J
+B) H, K, G, J
+C) H, G, K, J
+D) J, H, K, G
+E) G, H, J, K
+<cot_start>
+Apply the conditions.
+
+Because K is immediately to the right of H, H and K must appear together as the pair "H K" in that order.
+Also, H must be to the left of J, so J must be somewhere to the right of H and K.
+G cannot be at the leftmost or rightmost position.
+
+Check option B: H, K, G, J.
+Here the order is H in position 1, K in position 2, G in position 3, and J in position 4.
+K is immediately to the right of H, so condition 2 is satisfied.
+H is to the left of J, so condition 1 is satisfied.
+G is in position 3, which is neither the first nor the last position, so condition 3 is satisfied.
+All conditions are satisfied, so option B could be the order.
+
+Now check that the other options violate at least one condition:
+- A: G is in the first position, which violates condition 3.
+- C: K is not immediately to the right of H (G is between H and K), so condition 2 is violated.
+- D: H is not to the left of J (J comes first), so condition 1 is violated.
+- E: G is in the first position, which violates condition 3.
+
+Therefore, only option B could be the order.
+<cot_end>
+<ans>B</ans>
+
 ----
-
-Now, answer the following question. State the final answer in the exact format: `Answer: <Letter>`
+Now, answer the following question. State the final answer in the exact format: `<ans>Letter</ans>`.
 
 Question: {question}

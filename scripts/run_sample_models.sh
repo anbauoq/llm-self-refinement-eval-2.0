@@ -1,9 +1,9 @@
 #!/bin/bash
-set -euo pipefail
+# set -euo pipefail
 
-# Initialize conda
-source ~/miniforge3/etc/profile.d/conda.sh
-conda activate self_play
+# # Initialize conda
+# source ~/miniforge3/etc/profile.d/conda.sh
+# conda activate self_play
 
 # Use optimized inference by default (can override with USE_OPTIMIZED=false)
 USE_OPTIMIZED="${USE_OPTIMIZED:-true}"
