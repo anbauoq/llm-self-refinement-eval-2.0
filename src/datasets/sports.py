@@ -5,27 +5,7 @@ def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "id": item.get("id"),
         "question": item["question"],
-        "answer": str(item["answer"]).strip(),
-        "task_type": "true/false"
-    }
-
-def map_to_binary(answer: str) -> str:
-    answer = answer.strip().lower()
-    if answer in ["yes", "1"]:
-        return "1"
-    elif answer in ["no", "0"]:
-        return "0"
-    return "no_final_answer"
-
-import re
-from typing import Dict, Any
-
-def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
-    return {
-        "id": item.get("id"),
-        "question": item["question"],
-        "answer": str(item["answer"]).strip(),
-        "task_type": "true/false",
+        "answer": str(item["answer"]).strip()
     }
 
 def map_to_binary(answer: str) -> str:

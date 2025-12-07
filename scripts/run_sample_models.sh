@@ -10,20 +10,27 @@ USE_OPTIMIZED="${USE_OPTIMIZED:-true}"
 echo "Inference mode: $([ "$USE_OPTIMIZED" = "true" ] && echo "OPTIMIZED" || echo "STANDARD")"
 
 MODELS_NON_REASONING=(
+  "google/gemma-2-2b-it"
+  #"meta-llama/Meta-Llama-3.1-8B-Instruct"
+  "microsoft/Phi-4-mini-instruct"
   "Qwen/Qwen2.5-Math-1.5B"
+  #"Qwen/Qwen2.5-Math-7B"
 )
 
 MODELS_REASONING=(
   "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+  #"deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
+  #"deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
+  "microsoft/Phi-4-mini-reasoning"
 )
 
-DATASETS=( "ar_lsat" "aqua" "sports" )
+DATASETS=( "ar_lsat" "aqua" "sports" "gsm8k")
 
-TOKENS=(256 512)
+TOKENS=(256)
 INPUT_DIR="data"
 OUTPUT_DIR_REASONING="results/sample_results/reasoning"
 OUTPUT_DIR_NONREASONING="results/sample_results/nonreasoning"
-MAX_SAMPLES=30
+MAX_SAMPLES=3
 
 # Non-reasoning
 for model in "${MODELS_NON_REASONING[@]}"; do

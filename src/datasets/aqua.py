@@ -6,8 +6,7 @@ def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "id": item.get("id"),
         "question": item['question'],
-        "answer": item["answer"].strip().upper(),
-        "task_type": "mc",
+        "answer": item["answer"].strip().upper()
     }
 
 def extract_answer(text: str) -> str:

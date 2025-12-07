@@ -20,8 +20,7 @@ def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "id": item.get("id"),
         "question": full_question,
-        "answer": item["answer"],   # no normalization, use as-is
-        "task_type": "mc",
+        "answer": item["answer"]
     }
 
 

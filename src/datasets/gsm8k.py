@@ -42,8 +42,7 @@ def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "id": item.get("id"),
         "question": item["question"],
-        "answer": final_answer,
-        "task_type": "arithmetic",
+        "answer": final_answer
     }
 
 

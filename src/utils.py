@@ -51,7 +51,14 @@ def format_prompt(
     Load and format the dataset-specific answer prompt.
     Optionally prepend a hint.
     """
-    prompt_path = Path("prompts") / f"{dataset_name}_prompt.txt"
+
+    prompt_file_map = {
+        "asdiv": "arithmetic_prompt.txt",
+        "gsm8k": "arithmetic_prompt.txt",
+    }
+    prompt_filename = prompt_file_map.get(dataset_name, f"{dataset_name}_prompt.txt")
+
+    prompt_path = Path("prompts") / prompt_filename
     if not prompt_path.exists():
         raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
 
@@ -60,41 +67,46 @@ def format_prompt(
     return f"{hint.strip()}\n\n{body}" if inject_hint and hint else body
 
 
+
+from pathlib import Path
+
 def format_hint_prompt(
     question: str,
     predicted_answer: str,
     chain_of_thought: str,
     correct_answer: str,
-    task_type: str | None = None,
+    dataset_name: str,
 ) -> str:
     """
-    Load and fill the hint generation prompt.
-    Chooses a template based on task_type.
+    Load and format the *dataset-specific* hint-generation prompt.
+    asdiv and gsm8k share the same arithmetic hint prompt file.
     """
-    task = (task_type or "").strip().lower()
+    dataset_key = (dataset_name or "").strip().lower()
 
-    # Map task_type to the correct hint prompt file
-    prompt_map = {
-        "mc": "prompts/hint_prompt_mc.txt",
-        "true/false": "prompts/hint_prompt_true_false.txt",
-        "arithmetic": "prompts/hint_prompt_arithmetic.txt",
+    hint_prompt_map = {
+        "asdiv": "prompts/hint_prompt_arithmetic.txt",
+        "gsm8k": "prompts/hint_prompt_arithmetic.txt",
+
+        "aqua": "prompts/hint_prompt_aqua.txt",
+        "ar_lsat": "prompts/hint_prompt_ar_lsat.txt",
+        "sports": "prompts/hint_prompt_sports.txt",
     }
 
-    if task not in prompt_map:
+    filename = hint_prompt_map.get(dataset_key)
+    if filename is None:
         raise ValueError(
-            f"Unknown task_type={task_type!r} for hint prompt. "
-            f"Expected one of: {sorted(prompt_map.keys())}"
+            f"Unknown dataset_name={dataset_name!r} for hint prompts. "
+            f"Known: {sorted(hint_prompt_map.keys())}"
         )
 
-    template_path = Path(prompt_map[task])
-    template = template_path.read_text(encoding="utf-8")
-
+    template = Path(filename).read_text(encoding="utf-8")
     return template.format(
         question=question.strip(),
-        predicted_answer=predicted_answer.strip(),
-        chain_of_thought=chain_of_thought.strip(),
-        correct_answer=correct_answer.strip(),
+        predicted_answer=str(predicted_answer).strip(),
+        chain_of_thought=str(chain_of_thought).strip(),
+        correct_answer=str(correct_answer).strip(),
     )
+
 
 
 # Parsing / validation

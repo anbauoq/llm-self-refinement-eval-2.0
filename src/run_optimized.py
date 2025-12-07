@@ -150,11 +150,17 @@ def run_pipeline(args: ArgumentParser):
     # --- Stage 2: Hint Generation ---
     if not hints_path.exists():
         logging.info(f"Stage 2: Generating hints with batch_size={args.batch_size}...")
+
         hint_results = generate_hints(
-            wrong_only, model, tokenizer, 
+            wrong_only,
+            model,
+            tokenizer,
+            dataset_name=args.dataset,
             max_tokens=args.max_tokens,
-            batch_size=args.batch_size
+            batch_size=args.batch_size,
         )
+
+
         save_data(hint_results, hints_path)
     else:
         logging.info("Stage 2: Loading existing hints.")

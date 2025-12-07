@@ -1,0 +1,97 @@
+You answered this LSAT-style multiple-choice question incorrectly.
+
+Your job is to analyze your earlier reasoning and then write a short HINT that would have helped you solve the problem correctly, if it had been included in the original question.
+
+Question: {question}
+Your reasoning: {chain_of_thought}
+Your answer: {predicted_answer}
+Correct answer: {correct_answer}
+
+Your task:
+
+1. Figure out WHY your previous reasoning led to the wrong answer.
+2. Write a HINT that contains only the extra facts or reasoning patterns that would have helped you answer correctly if they had been included in the original question.
+
+IMPORTANT FORMAT RULES FOR THE HINT:
+- Do NOT say whether anything is correct or incorrect.
+- Do NOT write the correct answer letter in the hint sentences.
+- Do NOT mention "the correct answer", "your previous answer", or phrases like "you should choose ...".
+- Do NOT restate the question stem as a verdict (e.g., “the schedule must be …”).
+- The hint must read like neutral background information or guidance, not a verdict.
+
+Focus on:
+- Clarifying how each rule or condition constrains the possibilities.
+- Highlighting which entities must or must not appear together, and in which positions or days.
+- Pointing out interactions between conditions that eliminate tempting but invalid options.
+- Encouraging systematic checking of each option against all the rules.
+
+Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no bullet points and no extra commentary.
+
+Here are some examples of good hints:
+
+Example 1:
+Question: Five speakers—Alex, Blair, Casey, Devin, and Erin—will each give one talk at a one-day conference. The conference has five consecutive time slots, numbered 1 through 5, from earliest to latest. The following conditions apply:
+1. Alex speaks earlier than Blair.
+2. Casey speaks immediately before Devin.
+3. Erin does not speak in the first time slot.
+Which one of the following could be the order of the speakers from the first to the fifth time slot?
+A) Slot 1: Alex;  Slot 2: Blair;  Slot 3: Devin; Slot 4: Casey; Slot 5: Erin
+B) Slot 1: Erin;  Slot 2: Alex;  Slot 3: Casey; Slot 4: Devin; Slot 5: Blair
+C) Slot 1: Casey; Slot 2: Devin; Slot 3: Alex;  Slot 4: Blair; Slot 5: Erin
+D) Slot 1: Casey; Slot 2: Alex;  Slot 3: Devin; Slot 4: Blair; Slot 5: Erin
+E) Slot 1: Blair; Slot 2: Alex;  Slot 3: Casey; Slot 4: Devin; Slot 5: Erin
+Your reasoning: I focused mainly on placing Casey immediately before Devin and making sure Erin wasn’t in slot 1, and once I saw an option that satisfied those pieces, I chose it without checking all the constraints.
+Your answer: D
+Correct answer: C
+<hint>Make sure that any candidate schedule satisfies every condition at the same time, including both the “immediately before” requirement for Casey and Devin and the ordering requirement that Alex must appear earlier than Blair, not just the most salient rule.</hint>
+
+Example 2:
+Question: A committee of exactly three people is to be formed from four candidates: Rosa, Sam, Tariq, and Uma. The following conditions apply:
+1. Sam must be on the committee.
+2. If Rosa is on the committee, Tariq is not on the committee.
+3. Uma cannot be on the committee unless Rosa is also on the committee.
+Which of the following could be the complete set of committee members?
+A) Rosa, Sam, Tariq
+B) Sam, Tariq, Uma
+C) Rosa, Sam, Uma
+D) Sam only
+E) Rosa, Tariq, Uma
+Your reasoning: I looked for any set that included Sam and had three people, and I picked the first one that seemed to satisfy that, without carefully applying the conditional rules involving Rosa, Tariq, and Uma.
+Your answer: A
+Correct answer: C
+<hint>Use the conditional rules to filter combinations: every valid committee must include Sam, any committee with Rosa cannot include Tariq, and any committee with Uma must also include Rosa, so only sets that simultaneously respect all three facts are viable.</hint>
+
+Example 3:
+Question: Three houses—A, B, and C—are each painted a different color, chosen from exactly red, green, and blue. No two houses share the same color. The following conditions apply:
+1. House A is not painted red.
+2. House B is not painted blue.
+3. House C is painted either green or blue.
+Which one of the following could be the assignment of colors to the houses A, B, and C?
+A) A: red;    B: green; C: blue
+B) A: red;    B: blue;  C: green
+C) A: green;  B: red;   C: blue
+D) A: blue;   B: blue;  C: red
+E) A: green;  B: blue;  C: red
+Your reasoning: I mainly focused on making sure each house had a different color and didn’t check carefully which colors were forbidden for A and B, especially the restriction on A not being red.
+Your answer: A
+Correct answer: C
+<hint>Start by enforcing the forbidden-color rules for each house (A cannot be red, B cannot be blue, C must be green or blue) and only then check that the remaining assignments use three different colors without violating those individual restrictions.</hint>
+
+Example 4:
+Question: Three packages—J, K, and L—are each shipped on a different day, on three consecutive days from Monday through Wednesday. The following conditions apply:
+1. K is shipped earlier than J.
+2. L is not shipped on Monday.
+Which one of the following must be true?
+A) J is shipped on Monday.
+B) J is shipped on Wednesday.
+C) K is shipped on Monday.
+D) L is shipped on Tuesday.
+E) L is shipped on Wednesday.
+Your reasoning: I picked a statement that seemed consistent with one possible arrangement and did not check whether it had to hold in every arrangement that satisfies the rules.
+Your answer: D
+Correct answer: C
+<hint>For a “must be true” question, list all possible day assignments that satisfy the rules and look for the condition that holds in every such schedule, not just one that works in a single example arrangement.</hint>
+
+Now, based on the question, your reasoning, your answer, and the correct answer given at the top, write a new hint.
+
+Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no bullet points and no extra commentary.

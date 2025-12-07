@@ -135,8 +135,7 @@ def solve_questions(
                     processed = {
                         "id": item["id"],
                         "question": item["question"],
-                        "answer": item["ground_truth"],
-                        #task_type=item.get("task_type"),
+                        "answer": item["ground_truth"]
                     }
 
                 # just creating prompt
@@ -180,7 +179,7 @@ def solve_questions(
                 if not pending_indices:
                     break  # all items in this batch have been resolved
 
-                # yeah
+    
                 is_retry = attempt > 0
 
                 # Build tokenized inputs only for unresolved items (no re-tokenizing full text)
@@ -190,8 +189,6 @@ def solve_questions(
                     ids = list(base_input_ids[idx])  # copy to avoid mutating base
                     if is_retry:
                         ids = ids + retry_suffix_ids
-                    if len(ids) > 2048:
-                        ids = ids[:2048]
                     current_input_ids.append(ids)
                     current_indices.append(idx)
 
@@ -243,8 +240,7 @@ def solve_questions(
                         "full_output": trimmed_decoded,
                         "ground_truth": processed["answer"],
                         "predicted_answer": pred_answer,
-                        "is_correct": is_correct,
-                        "task_type": processed.get("task_type"),  # <<< ADDED
+                        "is_correct": is_correct
                     }
 
                 # Keep only those still unresolved for the next attempt
@@ -261,8 +257,7 @@ def solve_questions(
                         "chain_of_thought": False,
                         "predicted_answer": False,
                         "ground_truth": processed["answer"],
-                        "is_correct": False,
-                        "task_type": processed.get("task_type"),  # <<< ADDED
+                        "is_correct": False
                     }
 
             # Extend global results in batch order
@@ -275,6 +270,7 @@ def generate_hints(
     data: Iterable[Dict[str, Any]],
     model,
     tokenizer,
+    dataset_name: str,
     num_attempts: int = 3,
     temperature: float = 0.7,
     max_tokens: Optional[int] = None,
@@ -297,8 +293,7 @@ def generate_hints(
                     item["question"],
                     item.get("predicted_answer", ""),
                     item.get("chain_of_thought", ""),
-                    item["ground_truth"],
-                    task_type=item.get("task_type"),
+                    item["ground_truth"]
                 )
                 prompts_batch.append(prompt)
 
@@ -318,9 +313,9 @@ def generate_hints(
                     current_prompts,
                     return_tensors="pt",
                     padding=True,
-                    truncation=True,
-                    max_length=2048,
+                    truncation=False,
                 ).to(model.device)
+
 
                 prompt_length = inputs["input_ids"].shape[1]
 
@@ -332,9 +327,7 @@ def generate_hints(
                     is_retry=True,
                     attempt_num=attempt,
                     temperature=temperature,
-                    top_p=0.95,
-                    no_repeat_ngram_size=4,
-                    repetition_penalty=1.05
+                    top_p=0.95
                 )
 
                 out_ids = model.generate(**inputs, **gen_kwargs)
