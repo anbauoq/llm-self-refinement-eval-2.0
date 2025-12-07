@@ -24,13 +24,14 @@ MODELS_REASONING=(
   "microsoft/Phi-4-mini-reasoning"
 )
 
-DATASETS=( "ar_lsat" "aqua" "sports" "gsm8k")
+DATASETS=("ar_lsat" "aqua" "sports" "gsm8k")
 
-TOKENS=(256)
+TOKENS=(1024)
 INPUT_DIR="data"
 OUTPUT_DIR_REASONING="results/sample_results/reasoning"
 OUTPUT_DIR_NONREASONING="results/sample_results/nonreasoning"
-MAX_SAMPLES=3
+MAX_SAMPLES=10
+BATCH_SIZE=4   # fixed batch size
 
 # Non-reasoning
 for model in "${MODELS_NON_REASONING[@]}"; do
@@ -39,7 +40,6 @@ for model in "${MODELS_NON_REASONING[@]}"; do
       echo "Running $model on $dataset with max_tokens=$t"
       
       if [ "$USE_OPTIMIZED" = "true" ]; then
-        BATCH_SIZE=$([ "$t" -lt 512 ] && echo 16 || echo 8)
         python src/run_optimized.py \
           --model_path "$model" \
           --dataset "$dataset" \
@@ -68,7 +68,6 @@ for model in "${MODELS_REASONING[@]}"; do
       echo "Running $model on $dataset with max_tokens=$t"
       
       if [ "$USE_OPTIMIZED" = "true" ]; then
-        BATCH_SIZE=$([ "$t" -lt 512 ] && echo 16 || echo 8)
         python src/run_optimized.py \
           --model_path "$model" \
           --dataset "$dataset" \

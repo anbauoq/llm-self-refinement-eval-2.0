@@ -14,13 +14,14 @@ from utils import (
     is_valid_hint,
     exact_match,
     _parse_max_new_tokens,
+    extract_hint_text
 )
 
 # --- Constants ---
-DEFAULT_SOLVE_MAX_TOKENS = 256
-DEFAULT_HINT_MAX_TOKENS = 128
+DEFAULT_SOLVE_MAX_TOKENS = 2048
+DEFAULT_HINT_MAX_TOKENS = 1024
 RETRY_SEED_BASE = 21
-DEFAULT_BATCH_SIZE = 8  # Process 8 samples at once
+DEFAULT_BATCH_SIZE = 8
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -293,7 +294,8 @@ def generate_hints(
                     item["question"],
                     item.get("predicted_answer", ""),
                     item.get("chain_of_thought", ""),
-                    item["ground_truth"]
+                    item["ground_truth"],
+                    dataset_name=dataset_name
                 )
                 prompts_batch.append(prompt)
 
@@ -315,7 +317,6 @@ def generate_hints(
                     padding=True,
                     truncation=False,
                 ).to(model.device)
-
 
                 prompt_length = inputs["input_ids"].shape[1]
 
@@ -342,12 +343,14 @@ def generate_hints(
                         new_ids, skip_special_tokens=True
                     ).strip()
 
-                    # Remember last decoded attempt for fallback
+                    # Remember last decoded attempt for fallback (raw text)
                     last_decoded[global_idx] = decoded
 
-                    if is_valid_hint(decoded, item["ground_truth"]):
+                    # Extract just the inner <hint>...</hint> if present
+                    hint_text = extract_hint_text(decoded)
+                    if hint_text:
                         item_with_hint = item.copy()
-                        item_with_hint["hint_sentence"] = decoded
+                        item_with_hint["hint_sentence"] = hint_text
                         batch_hints[global_idx] = item_with_hint
 
                 # Filter out those that already have a valid hint
@@ -357,7 +360,8 @@ def generate_hints(
             for idx, res in enumerate(batch_hints):
                 if res is None:
                     item_with_hint = batch[idx].copy()
-                    item_with_hint["hint_sentence"] = last_decoded.get(idx, "")
+                    raw = last_decoded.get(idx, "")
+                    item_with_hint["hint_sentence"] = extract_hint_text(raw) if raw else ""
                     batch_hints[idx] = item_with_hint
 
             hints.extend(batch_hints)

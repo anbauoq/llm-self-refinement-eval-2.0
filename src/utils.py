@@ -8,8 +8,6 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping
 
 
-# I/O
-
 def load_data(path: str | Path) -> List[Dict[str, Any]]:
     """
     Load a JSONL file into a list of dicts.
@@ -66,9 +64,6 @@ def format_prompt(
     body = template.format(question=question.strip())
     return f"{hint.strip()}\n\n{body}" if inject_hint and hint else body
 
-
-
-from pathlib import Path
 
 def format_hint_prompt(
     question: str,
@@ -138,9 +133,25 @@ def contains_bad_phrases(hint: str, answer: str) -> bool:
     return any(token in h for token in blacklist if token)
 
 
-def is_valid_hint(hint: str, answer: str) -> bool:
+def is_valid_hint(hint: str, correct_answer: str) -> bool:
     """Valid iff it does NOT contain any blacklisted phrase or the answer itself."""
-    return not contains_bad_phrases(hint, answer)
+    return not contains_bad_phrases(hint, correct_answer)
+
+import re
+
+def extract_hint_text(output: str) -> str:
+    """
+    Extract inner text from the <hint>...</hint> block.
+    Returns "no_hint_generated" if no such block exists.
+    """
+    if not output:
+        return ""
+    matches = re.findall(r"<hint>(.*?)</hint>", output, flags=re.DOTALL | re.IGNORECASE)
+    if not matches:
+        return ""
+    # Take the last block in case the model produced multiple
+    inner = matches[-1].strip()
+    return inner
 
 
 # Evaluation helpers
