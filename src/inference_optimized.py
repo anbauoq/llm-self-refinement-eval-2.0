@@ -111,10 +111,15 @@ def solve_questions(
     # Process in batches
     batches = _batch_data(data_list, batch_size) # dividing our data into batches, list of lists, each of which contains batch_size dictionaries
 
-    with torch.inference_mode(): # so gradients are not tracked -> optimization of memory
+    with torch.inference_mode(): 
         retry_suffix_text = (
-            "\nPlease provide a step-by-step breakdown and end with your final answer."
-        )
+        "\nIMPORTANT FORMAT REMINDER:\n"
+        "- You must show your full reasoning between <cot_start> and <cot_end>.\n"
+        "- Then, on a NEW line, you MUST output a SINGLE final answer in the exact format "
+        "required by the instructions above (for this question type).\n"
+        "<ans>X</ans>"
+        "You are NOT allowed to output <ans>None</ans> or anything other than a single letter."
+    )
         retry_suffix_ids: List[int] = tokenizer(
             retry_suffix_text,
             add_special_tokens=False,
@@ -228,7 +233,7 @@ def solve_questions(
                     ).strip()
 
                     pred_answer = dataset_module.extract_answer(trimmed_decoded) or ""
-                    if not pred_answer:
+                    if (not pred_answer) or (pred_answer == "no_final_answer"):
                         continue
 
                     cot = extract_cot(trimmed_decoded)
