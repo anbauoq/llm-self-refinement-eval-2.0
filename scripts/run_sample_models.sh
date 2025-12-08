@@ -31,7 +31,7 @@ INPUT_DIR="data"
 OUTPUT_DIR_REASONING="results/sample_results/reasoning"
 OUTPUT_DIR_NONREASONING="results/sample_results/nonreasoning"
 MAX_SAMPLES=10
-BATCH_SIZE=4   # fixed batch size
+BATCH_SIZE=4
 
 # Non-reasoning
 for model in "${MODELS_NON_REASONING[@]}"; do
