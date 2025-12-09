@@ -140,7 +140,10 @@ def run_pipeline(args: ArgumentParser):
         logging.info("Stage 1: Loading existing initial inference results.")
         initial_results = load_data(initial_results_path)
 
-    wrong_only = [ex for ex in initial_results if not ex.get("is_correct", False)]
+    wrong_only = [
+        ex for ex in initial_results
+        if ex.get("is_correct") is False and ex.get("predicted_answer") is not None
+    ]
     logging.info(f"Found {len(wrong_only)} incorrect answers for hint generation.")
 
     if not wrong_only:
