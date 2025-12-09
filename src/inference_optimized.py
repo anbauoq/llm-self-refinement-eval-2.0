@@ -13,7 +13,9 @@ from utils import (
     extract_cot,
     exact_match,
     _parse_max_new_tokens,
-    extract_hint_text
+    extract_hint_text,
+    is_valid_hint,
+    strip_answer_from_hint
 )
 
 # --- Constants ---
@@ -371,7 +373,9 @@ def generate_hints(
 
                     # Extract just the inner <hint>...</hint> if present
                     hint_text = extract_hint_text(decoded)
-                    if hint_text:
+
+                    # Accept only non-leaking hints here
+                    if hint_text and is_valid_hint(hint_text, item["ground_truth"]):
                         item_with_hint = item.copy()
                         item_with_hint["hint_sentence"] = hint_text
                         batch_hints[global_idx] = item_with_hint
@@ -384,7 +388,20 @@ def generate_hints(
                 if res is None:
                     item_with_hint = batch[idx].copy()
                     raw = last_decoded.get(idx, "")
-                    item_with_hint["hint_sentence"] = extract_hint_text(raw) if raw else ""
+                    hint_text = extract_hint_text(raw) if raw else ""
+
+                    if hint_text:
+                        # If all attempts leaked, strip the answer out and reuse the rest
+                        if not is_valid_hint(hint_text, item_with_hint["ground_truth"]):
+                            hint_text = strip_answer_from_hint(
+                                hint_text,
+                                item_with_hint["ground_truth"],
+                            )
+                            # If it somehow still leaks, drop it
+                            if not is_valid_hint(hint_text, item_with_hint["ground_truth"]):
+                                hint_text = ""
+
+                    item_with_hint["hint_sentence"] = hint_text
                     batch_hints[idx] = item_with_hint
 
             hints.extend(batch_hints)
