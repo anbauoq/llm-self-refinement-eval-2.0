@@ -11,7 +11,6 @@ from utils import (
     format_prompt,
     format_hint_prompt,
     extract_cot,
-    is_valid_hint,
     exact_match,
     _parse_max_new_tokens,
     extract_hint_text
@@ -43,8 +42,8 @@ def _build_generation_kwargs(
     *,
     is_retry: bool,
     attempt_num: int,
-    temperature: float = 0.7,
-    top_p: float = 0.95,
+    temperature: float,
+    top_p: float
 ) -> Dict[str, Any]:
     """Central builder for model.generate kwargs with batching support."""
     pad_id, eos_id = _resolve_pad_eos(tokenizer)
@@ -54,6 +53,7 @@ def _build_generation_kwargs(
         "pad_token_id": pad_id,
         "use_cache": True,
         "do_sample": False,
+        "no_repeat_ngram_size": 3
     }
     if eos_id is not None:
         gen_kwargs["eos_token_id"] = eos_id
