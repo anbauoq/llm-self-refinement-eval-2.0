@@ -26,6 +26,7 @@ First, clone the repository and set up the Python environment:
 git clone https://github.com/your-username/llm-self-refine-eval.git
 cd llm-self-refine-eval
 pip install -r requirements.txt
+python load_models.py
 ```
 
 ### 2. Running the Included Experiments
@@ -43,58 +44,4 @@ python src/run.py \
   --max_tokens 1024
 ```
 
-To simplify running multiple experiments, you can use the provided shell scripts located in the `scripts/` directory:
-
-- `scripts/run_sample_models.sh`: A quick script to test the pipeline on a small subset of models and datasets.  
-- `scripts/run_all_models.sh`: A comprehensive script to run the full evaluation across all predefined models and datasets.
-
-
-### 3. Analyzing the Results
-
-After running the pipeline, all raw outputs will be saved as `.jsonl` files in the `results/` directory.  
-
-The `src/analysis.py` script aggregates these results into a clean, human-readable summary.
-
-#### How to Run the Analysis
-
-Execute the script from the project's root directory. The `--results_root` argument specifies which folder of results to analyze.
-
-**Basic Usage:**  
-This command analyzes everything inside the `results/` directory and saves the output to default file locations (`results/summary.txt` and `results/summary.csv`):
-
-```bash
-python src/analysis.py --results_root results/
-```
-
-**Advanced Usage:** 
-You can also specify custom output paths and analyze a specific subset of results.
-
-```bash
-python src/analysis.py \
-  --results_root results/sample_results \
-  --out_txt results/sample_results/statistics/summary.txt \
-  --out_csv results/sample_results/statistics/summary.csv
-```
-
-This will generate two summary files in the specified locations:
-
-- `summary.txt`: A text file with easy-to-read accuracy metrics.  
-- `summary.csv`: A CSV file with detailed metrics for further data analysis and plotting.
-
-
-## 🛠️ Project Structure
-```
-.
-├── data/                  # Input datasets
-├── prompts/               # Prompt templates
-├── results/               # Output directory for all experiment results
-├── scripts/               # Shell scripts to automate running experiments
-├── src/
-│   ├── datasets/          # Python modules for processing each dataset
-│   ├── __init__.py
-│   ├── analysis.py        # Script to aggregate and summarize results
-│   ├── inference.py       # Core logic for model inference and hint generation
-│   ├── run.py             # Main pipeline execution script
-│   └── utils.py           # Helper functions for I/O, parsing, etc.
-└── requirements.txt       # Project dependencies
-```
+To simplify running multiple experiments, you can use the provided shell scripts located in the `scripts/` directory
