@@ -135,24 +135,102 @@ def extract_cot(output: str) -> str:
 
 
 
-def contains_bad_phrases(hint: str, answer: str) -> bool:
+def contains_bad_phrases(hint: str, answer: str, dataset_name: str) -> bool:
     """
-    True if the hint likely reveals the answer directly.
+    True if the hint very likely reveals the answer directly.
+
+    Dataset-aware behavior:
+    - asdiv, gsm8k (arithmetic):
+        numeric/word answers – treat any standalone occurrence as a leak
+        (plus explicit "answer is X" patterns).
+    - aqua, ar_lsat (MC, letter answers):
+        only treat as leak when clearly tied to 'answer', 'option', etc.
+        (don't kill every random 'a'/'b'/...).
+    - sports (True/False as 0/1):
+        only treat as leak when 0/1 appears in explicit 'answer/label is' phrases
+        (scores like 1–0 should NOT be flagged).
     """
+    if not hint:
+        return False
+
     h = (hint or "").lower()
     a = (answer or "").strip().lower()
-    blacklist = (
-        "final answer",
-        "the answer is",
-        "answer:",
-        a,
+
+    # Generic "this is the answer" phrases (bad everywhere, even without seeing `a`)
+    generic_triggers = (
+        "the correct answer",
+        "this is the correct answer",
+        "this is the right answer",
+        "is the correct answer",
+        "is the right answer",
     )
-    return any(token in h for token in blacklist if token)
+    if any(t in h for t in generic_triggers):
+        return True
+
+    if not a:
+        return False
+
+    if dataset_name in {"asdiv", "gsm8k"}:
+        is_numeric_like = a.replace(".", "", 1).isdigit() or "/" in a
+        # For arithmetic, be aggressive on numeric / longer answers
+        if len(a) > 2 or is_numeric_like:
+            # Any standalone occurrence is suspicious
+            pattern = r"\b" + re.escape(a) + r"\b"
+            if re.search(pattern, h):
+                return True
+
+            # Also catch explicit "answer is X" patterns
+            patterns = [
+                rf"final answer\s*[:\-]?\s*{re.escape(a)}",
+                rf"the answer is\s*[:\-]?\s*{re.escape(a)}",
+                rf"correct answer\s*[:\-]?\s*{re.escape(a)}",
+            ]
+            for pat in patterns:
+                if re.search(pat, h):
+                    return True
+
+        return False
+
+    if dataset_name in {"aqua", "ar_lsat"}:
+        # We assume `a` is the option letter (A/B/C/D/...)
+        # Only flag when tied explicitly to "answer/option/choice/letter".
+        short_patterns = [
+            rf"final answer[^.\n]*\b{re.escape(a)}\b",
+            rf"the answer is[^.\n]*\b{re.escape(a)}\b",
+            rf"correct answer[^.\n]*\b{re.escape(a)}\b",
+            rf"answer\s*(is|=)\s*\b{re.escape(a)}\b",
+            rf"option\s+\b{re.escape(a)}\b",
+            rf"choice\s+\b{re.escape(a)}\b",
+            rf"letter\s+\b{re.escape(a)}\b",
+            rf"\(\s*{re.escape(a)}\s*\)",  # e.g. "(A)"
+        ]
+        for pat in short_patterns:
+            if re.search(pat, h):
+                return True
+        return False
+
+    if dataset_name == "sports":
+        # Do NOT treat any standalone '0'/'1' as leak – scores, times, etc.
+        # Only flag explicit "answer/label is 0/1" style patterns.
+        patterns = [
+            rf"final answer\s*[:\-]?\s*{re.escape(a)}",
+            rf"the answer is\s*[:\-]?\s*{re.escape(a)}",
+            rf"correct answer\s*[:\-]?\s*{re.escape(a)}",
+            rf"answer\s*(is|=)\s*{re.escape(a)}",
+            rf"label\s*(is|=)\s*{re.escape(a)}",
+        ]
+        for pat in patterns:
+            if re.search(pat, h):
+                return True
+        return False
+
+    return False
 
 
-def is_valid_hint(hint: str, correct_answer: str) -> bool:
-    """Valid iff it does NOT contain any blacklisted phrase or the answer itself."""
-    return not contains_bad_phrases(hint, correct_answer)
+
+def is_valid_hint(hint: str, correct_answer: str, dataset_name: str) -> bool:
+    return not contains_bad_phrases(hint, correct_answer, dataset_name)
+
     
 def strip_answer_from_hint(hint: str, answer: str) -> str:
     """
