@@ -88,11 +88,6 @@ def format_hint_prompt(
     }
 
     filename = hint_prompt_map.get(dataset_key)
-    if filename is None:
-        raise ValueError(
-            f"Unknown dataset_name={dataset_name!r} for hint prompts. "
-            f"Known: {sorted(hint_prompt_map.keys())}"
-        )
 
     template = Path(filename).read_text(encoding="utf-8")
     return template.format(
@@ -158,6 +153,37 @@ def contains_bad_phrases(hint: str, answer: str) -> bool:
 def is_valid_hint(hint: str, correct_answer: str) -> bool:
     """Valid iff it does NOT contain any blacklisted phrase or the answer itself."""
     return not contains_bad_phrases(hint, correct_answer)
+    
+def strip_answer_from_hint(hint: str, answer: str) -> str:
+    """
+    Remove direct mentions of the correct answer from the hint.
+
+    - For numeric / multi-char answers: remove them as standalone tokens.
+    - For single-letter answers (A/B/C/D/True/False): same idea, using word boundaries.
+    """
+    if not hint or not answer:
+        return hint
+
+    h = hint
+    a = answer.strip()
+
+    # Remove common "answer + value" patterns first
+    # e.g., "the answer is 18", "final answer: C"
+    patterns = [
+        rf"(final answer\s*[:\-]?\s*){re.escape(a)}",
+        rf"(the answer is\s*[:\-]?\s*){re.escape(a)}",
+        rf"(correct answer is\s*[:\-]?\s*){re.escape(a)}",
+    ]
+    for pat in patterns:
+        h = re.sub(pat, r"\1", h, flags=re.IGNORECASE)
+
+    # Then remove the answer token itself when it appears as a separate word/number
+    token_pattern = r"\b" + re.escape(a) + r"\b"
+    h = re.sub(token_pattern, "", h, flags=re.IGNORECASE)
+
+    # Collapse extra whitespace
+    h = " ".join(h.split())
+    return h
 
 def extract_hint_text(output: str) -> str:
     """
