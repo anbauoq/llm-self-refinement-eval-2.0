@@ -112,14 +112,14 @@ def solve_questions(
     batches = _batch_data(data_list, batch_size) # dividing our data into batches, list of lists, each of which contains batch_size dictionaries
 
     with torch.inference_mode(): 
-        retry_suffix_text = (
-        "\nIMPORTANT FORMAT REMINDER:\n"
-        "- You must show your full reasoning between <cot_start> and <cot_end>.\n"
-        "- Then, on a NEW line, you MUST output a SINGLE final answer in the exact format "
-        "required by the instructions above (for this question type).\n"
-        "<ans>X</ans>"
-        "You are NOT allowed to output <ans>None</ans> or anything other than a single letter."
-    )
+        
+        retry_suffix_text = """
+        IMPORTANT FORMAT REMINDER:
+        - You must write your full reasoning between <cot_start> and <cot_end>.
+        - Then, on a NEW line after the reasoning, you MUST output ONLY the final answer
+          wrapped in <ans> and </ans>.
+          """
+  
         retry_suffix_ids: List[int] = tokenizer(
             retry_suffix_text,
             add_special_tokens=False,
