@@ -375,7 +375,7 @@ def generate_hints(
                     hint_text = extract_hint_text(decoded)
 
                     # Accept only non-leaking hints here
-                    if hint_text and is_valid_hint(hint_text, item["ground_truth"]):
+                    if hint_text and is_valid_hint(hint_text, item["ground_truth"], dataset_name):
                         item_with_hint = item.copy()
                         item_with_hint["hint_sentence"] = hint_text
                         batch_hints[global_idx] = item_with_hint
@@ -392,13 +392,13 @@ def generate_hints(
 
                     if hint_text:
                         # If all attempts leaked, strip the answer out and reuse the rest
-                        if not is_valid_hint(hint_text, item_with_hint["ground_truth"]):
+                        if not is_valid_hint(hint_text, item_with_hint["ground_truth"], dataset_name):
                             hint_text = strip_answer_from_hint(
                                 hint_text,
                                 item_with_hint["ground_truth"],
                             )
                             # If it somehow still leaks, drop it
-                            if not is_valid_hint(hint_text, item_with_hint["ground_truth"]):
+                            if not is_valid_hint(hint_text, item_with_hint["ground_truth"], dataset_name):
                                 hint_text = ""
 
                     item_with_hint["hint_sentence"] = hint_text
