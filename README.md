@@ -1,8 +1,8 @@
-# LLM Self-Refine Eval
+# LLM Self-Refinement Capabilities Evaluation
 
 This project provides a comprehensive framework to evaluate the self-refinement capabilities of Large Language Models (LLMs). The core experiment tests whether an LLM can identify its own reasoning errors and generate effective, corrective hints to improve its performance on a second attempt.
 
-## 🧪 The Evaluation Workflow
+## The Evaluation Workflow
 
 The pipeline is executed in three automated stages for each model and dataset pair:
 
@@ -16,9 +16,9 @@ The pipeline is executed in three automated stages for each model and dataset pa
    The model is presented with the same questions it initially failed, but this time, the self-generated hint is prepended to the prompt to measure if the hint leads to a correct answer.
 
 
-## 🚀 How to Use It?
+## How to Use It?
 
-### 1. Setup
+### Setup
 
 First, clone the repository and set up the Python environment:
 
@@ -26,10 +26,10 @@ First, clone the repository and set up the Python environment:
 git clone https://github.com/your-username/llm-self-refine-eval.git
 cd llm-self-refine-eval
 pip install -r requirements.txt
-python load_models.py
+python scripts/download_models.py
 ```
 
-### 2. Running the Included Experiments
+### Running the Included Experiments
 
 The project comes pre-packaged with several datasets (in `data/`) and their corresponding prompt templates (in `prompts/`).
 
