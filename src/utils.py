@@ -103,19 +103,41 @@ def format_hint_prompt(
     )
 
 
-
-# Parsing / validation
-
-_COT_RE = re.compile(r"<cot_start>(.*?)<cot_end>", flags=re.DOTALL)
-
-
 def extract_cot(output: str) -> str:
     """
-    Extract the last CoT block delimited by <cot_start> ... <cot_end>.
-    Returns "" if none found.
+    Extract the last reasoning block.
+
+    Priority:
+    1. <cot_start> ... <cot_end>
+    2. <think> ... </think>
+    If neither is present, return the full output stripped.
     """
-    matches = _COT_RE.findall(output or "")
-    return matches[-1].strip() if matches else output
+    if not output:
+        return ""
+        
+    text = output
+
+    # 1) Try <cot_start> ... <cot_end>
+    cot_matches = re.findall(
+        r"<cot_start>(.*?)<cot_end>",
+        text,
+        flags=re.DOTALL | re.IGNORECASE,
+    )
+    if cot_matches:
+        return cot_matches[-1].strip()
+
+    # 2) Fall back to <think> ... </think>
+    think_matches = re.findall(
+        r"<think>(.*?)</think>",
+        text,
+        flags=re.DOTALL | re.IGNORECASE,
+    )
+    if think_matches:
+        return think_matches[-1].strip()
+
+    # 3) No tags – treat full output as reasoning
+    return text.strip()
+
 
 
 def contains_bad_phrases(hint: str, answer: str) -> bool:
@@ -137,18 +159,19 @@ def is_valid_hint(hint: str, correct_answer: str) -> bool:
     """Valid iff it does NOT contain any blacklisted phrase or the answer itself."""
     return not contains_bad_phrases(hint, correct_answer)
 
-import re
-
 def extract_hint_text(output: str) -> str:
     """
     Extract inner text from the <hint>...</hint> block.
-    Returns "no_hint_generated" if no such block exists.
+
+    If no such block exists, return the full decoded output stripped.
+    This way, non-tagged but reasonable hints are still usable.
     """
     if not output:
         return ""
     matches = re.findall(r"<hint>(.*?)</hint>", output, flags=re.DOTALL | re.IGNORECASE)
     if not matches:
-        return ""
+        # No <hint> tags – fall back to using the whole output as the hint
+        return output.strip()
     # Take the last block in case the model produced multiple
     inner = matches[-1].strip()
     return inner
@@ -170,7 +193,7 @@ def exact_match(true_answer: str, predicted_answer: str) -> bool:
             return True
     return False
 
-# --- Parsing ---
+# Parsing
 def _parse_max_new_tokens(max_tokens: Any, default: int) -> int:
     """Accept int or int-like str; otherwise use default."""
     if isinstance(max_tokens, int):
