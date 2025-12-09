@@ -168,7 +168,6 @@ def solve_questions(
             
             base_input_ids: List[List[int]] = base_encoded["input_ids"] # tokenizations for all questions in the current batch
 
-            
 
 
             batch_size_actual = len(batch) # just for the case when last batch is smaller
@@ -228,22 +227,22 @@ def solve_questions(
                 for local_idx, output in enumerate(output_ids):
                     global_idx = current_indices[local_idx]
                     processed = processed_batch[global_idx]
-
+                
                     new_ids = _strip_prompt_from_outputs(output, prompt_length)
                     trimmed_decoded = tokenizer.decode(
                         new_ids, skip_special_tokens=True
                     ).strip()
-                    
+                                    
                     last_raw_outputs[global_idx] = trimmed_decoded
-                    
+                                    
+                    cot = extract_cot(trimmed_decoded)
                     pred_answer = dataset_module.extract_answer(trimmed_decoded) or ""
-                    
+                                    
                     if (not pred_answer) or (pred_answer == "no_final_answer"):
                         continue
-
-                    cot = extract_cot(trimmed_decoded)
+                
                     is_correct = exact_match(processed["answer"], pred_answer)
-
+                
                     batch_results[global_idx] = {
                         "id": processed["id"],
                         "question": processed["question"],
@@ -254,6 +253,7 @@ def solve_questions(
                         "is_correct": is_correct
                     }
 
+
                 # Keep only those still unresolved for the next attempt
                 pending_indices = [i for i in pending_indices if batch_results[i] is None]
 
@@ -262,15 +262,27 @@ def solve_questions(
                 if res is None:
                     processed = processed_batch[idx]
                     raw_out = last_raw_outputs[idx]
-                    batch_results[idx] = {
-                        "id": processed["id"],
-                        "question": processed["question"],
-                        "full_output": raw_out,
-                        "chain_of_thought": False,
-                        "predicted_answer": False,
-                        "ground_truth": processed["answer"],
-                        "is_correct": False
-                    }
+                    if raw_out is not None:
+                        cot_fallback = extract_cot(raw_out)
+                        batch_results[idx] = {
+                            "id": processed["id"],
+                            "question": processed["question"],
+                            "full_output": raw_out,
+                            "chain_of_thought": cot_fallback,
+                            "predicted_answer": None,
+                            "ground_truth": processed["answer"],
+                            "is_correct": None
+                        }
+                    else:
+                        batch_results[idx] = {
+                            "id": processed["id"],
+                            "question": processed["question"],
+                            "full_output": "",
+                            "chain_of_thought": None,
+                            "predicted_answer": None,
+                            "ground_truth": processed["answer"],
+                            "is_correct": None
+                        }
 
             # Extend global results in batch order
             results.extend(batch_results)
