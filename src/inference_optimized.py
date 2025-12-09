@@ -176,6 +176,8 @@ def solve_questions(
             # One slot per item in the batch; None means "still unresolved"
             
             batch_results: List[Optional[Dict[str, Any]]] = [None] * batch_size_actual # keeping status weather pred_answer succesfully extracted or no, initially oll are not so None
+
+            last_raw_outputs: List[Optional[str]] = [None] * batch_size_actual # storing all outputs so in case of failure the full output is available
             
             pending_indices = list(range(batch_size_actual)) # initially all indices, all questions are pending (unanswered)
 
@@ -231,8 +233,11 @@ def solve_questions(
                     trimmed_decoded = tokenizer.decode(
                         new_ids, skip_special_tokens=True
                     ).strip()
-
+                    
+                    last_raw_outputs[global_idx] = trimmed_decoded
+                    
                     pred_answer = dataset_module.extract_answer(trimmed_decoded) or ""
+                    
                     if (not pred_answer) or (pred_answer == "no_final_answer"):
                         continue
 
@@ -256,10 +261,11 @@ def solve_questions(
             for idx, res in enumerate(batch_results):
                 if res is None:
                     processed = processed_batch[idx]
+                    raw_out = last_raw_outputs[idx]
                     batch_results[idx] = {
                         "id": processed["id"],
                         "question": processed["question"],
-                        "full_output": False,
+                        "full_output": raw_out,
                         "chain_of_thought": False,
                         "predicted_answer": False,
                         "ground_truth": processed["answer"],
