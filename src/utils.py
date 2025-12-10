@@ -234,9 +234,6 @@ def is_valid_hint(hint: str, correct_answer: str, dataset_name: str) -> bool:
 def strip_answer_from_hint(hint: str, answer: str) -> str:
     """
     Remove direct mentions of the correct answer from the hint.
-
-    - For numeric / multi-char answers: remove them as standalone tokens.
-    - For single-letter answers (A/B/C/D/True/False): same idea, using word boundaries.
     """
     if not hint or not answer:
         return hint

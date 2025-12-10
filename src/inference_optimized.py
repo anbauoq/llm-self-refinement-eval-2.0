@@ -46,20 +46,19 @@ def _build_generation_kwargs(
     attempt_num: int,
     temperature: float,
     top_p: float,
-    min_new_tokens: int = 64,  
+    min_new_tokens: int = 64,
 ) -> Dict[str, Any]:
-    """Central builder for model.generate kwargs with batching support."""
     pad_id, eos_id = _resolve_pad_eos(tokenizer)
-
     max_new = _parse_max_new_tokens(max_tokens, default=default_tokens)
 
     gen_kwargs: Dict[str, Any] = {
         "max_new_tokens": max_new,
-        # don't let min_new_tokens exceed max_new_tokens
         "min_new_tokens": min(min_new_tokens, max_new),
         "pad_token_id": pad_id,
         "use_cache": True,
-        "do_sample": False,
+        "do_sample": True,
+        "temperature": temperature,
+        "top_p": top_p,
         "no_repeat_ngram_size": 3,
     }
     if eos_id is not None:
@@ -67,13 +66,9 @@ def _build_generation_kwargs(
 
     if is_retry:
         torch.manual_seed(RETRY_SEED_BASE + attempt_num)
-        gen_kwargs.update(
-            do_sample=True,
-            temperature=temperature,
-            top_p=top_p,
-        )
 
     return gen_kwargs
+
 
 def _batch_data(data: List, batch_size: int) -> List[List]:
     """Split data into batches."""
@@ -224,10 +219,9 @@ def solve_questions(
                     default_tokens=DEFAULT_SOLVE_MAX_TOKENS,
                     is_retry=is_retry,
                     attempt_num=attempt,
-                    temperature=0.5,
-                    top_p=0.9,
+                    temperature=0.7,
+                    top_p=0.95,
                 )
-
 
                 output_ids = model.generate(**inputs, **gen_kwargs)
 
@@ -250,7 +244,10 @@ def solve_questions(
                         continue
                 
                     is_correct = exact_match(processed["answer"], pred_answer)
-                
+
+                    if is_retry:
+                        last_attempt_is_retry[global_idx] = True
+
                     batch_results[global_idx] = {
                         "id": processed["id"],
                         "question": processed["question"],

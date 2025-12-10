@@ -1,9 +1,9 @@
-Answer the following question by showing your full reasoning between <cot_start> and <cot_end>. 
+Answer the following question by showing your full reasoning between <think> and </think>.
 Then, on a NEW line, write your final answer between <ans> and </ans>.
 
 CRITICAL FORMAT RULES:
 - Your output MUST have this structure, in this order:
-  1) A reasoning section between <cot_start> and <cot_end>.
+  1) A reasoning section between <think> and </think>.
   2) On the very next line, a single <ans> tag containing only 0 or 1.
 - The <ans>...</ans> line MUST be the LAST line of your entire output.
 - You MUST NOT write ANYTHING (no words, no explanations, no punctuation, no spaces, no newlines) after </ans>.
@@ -14,60 +14,60 @@ Decision rule:
 
 Example 1:
 Question: Is the following sentence plausible? Kyle Palmieri was called for slashing
-<cot_start>
+<think>
 Kyle Palmieri is a professional ice hockey player. “Slashing” is a common penalty in ice hockey. It is normal and plausible for a hockey player to be called for slashing. So this sentence is plausible.
-<cot_end>
+</think>
 <ans>1</ans>
 
 Example 2:
 Question: Is the following sentence plausible? Joao Moutinho caught the screen pass in the NFC championship
-<cot_start>
+<think>
 Joao Moutinho is a professional soccer player. A “screen pass” and the “NFC championship” are terms from American football, not soccer.
 It is very unlikely and contextually wrong to describe this soccer player in an NFL playoff game catching a screen pass. So this sentence is not plausible.
-<cot_end>
+</think>
 <ans>0</ans>
 
 Example 3:
 Question: Is the following sentence plausible? Carson Wentz set the pick and roll
-<cot_start>
+<think>
 Carson Wentz is a professional American football quarterback. A “pick and roll” is a common play in basketball, not in football.
 Describing a football quarterback as running a pick and roll is mixing sports terms in an unnatural way. So this sentence is not plausible.
-<cot_end>
+</think>
 <ans>0</ans>
 
 Example 4:
 Question: Is the following sentence plausible? Jonas Valanciunas beat the buzzer
-<cot_start>
+<think>
 Jonas Valanciunas is a professional basketball player. “Beat the buzzer” is a normal basketball phrase meaning he scored just before the game or shot clock expired. This is a common thing that can happen in basketball games. So this sentence is plausible.
-<cot_end>
+</think>
 <ans>1</ans>
 
 Example 5:
 Question: Is the following sentence plausible? Jamel Murray was perfect from the line
-<cot_start>
+<think>
 This refers to Jamal Murray, a professional basketball player. “Perfect from the line” means making all free throws, which is a standard basketball expression. It is normal and realistic for a good shooter to be perfect from the free throw line in a game. So this sentence is plausible.
-<cot_end>
+</think>
 <ans>1</ans>
 
 Example 6:
 Question: Is the following sentence plausible? Sam Darnold passed the puck
-<cot_start>
+<think>
 Sam Darnold is a professional American football quarterback. “Passed the puck” is an ice hockey phrase, because the puck is used in hockey, not football. Using a hockey-specific action for a known football quarterback is mixing sports in an unnatural way. So this sentence is not plausible.
-<cot_end>
+</think>
 <ans>0</ans>
 
 Example 7:
 Question: Is the following sentence plausible? Draymond Green threw a touchdown
-<cot_start>
+<think>
 Draymond Green is a professional basketball player. “Threw a touchdown” is an American football phrase, where a quarterback throws a pass for a touchdown. Basketball players do not “throw touchdowns” in their sport. So this sentence is not plausible.
-<cot_end>
+</think>
 <ans>0</ans>
 
 Example 8:
 Question: Is the following sentence plausible? Malcolm Brogdon banked the shot in
-<cot_start>
+<think>
 Malcolm Brogdon is a professional basketball player. “Banked the shot in” is a common basketball phrase meaning the ball hit the backboard and went into the hoop. This is a normal kind of play in basketball. So this sentence is plausible.
-<cot_end>
+</think>
 <ans>1</ans>
 
 
