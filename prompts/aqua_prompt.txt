@@ -1,4 +1,4 @@
-Answer the following multiple-choice question by showing your full reasoning between <cot_start> and <cot_end>. 
+Answer a multiple-choice question by showing your full reasoning between <cot_start> and <cot_end>. 
 Then on a new line, write your final answer choice between <ans> </ans>.
 
 Important:
@@ -8,130 +8,46 @@ Important:
 Example 1:
 Question: A company produces 420 units of a particular computer component every month, at a production cost to the company of $110 per component, and sells all of the components by the end of each month. What is the minimum selling price per component that will guarantee that the yearly profit (revenue from sales minus production costs) will be at least $626,400 ?\n# Answer option: ['A)226', 'B)230', 'C)240', 'D)260', 'E)280']
 <cot_start>
-They produce 420 units every month.
-In one year there are 12 months, so the total number of units in a year is 420 * 12 = 5040.
-
-Let p be the selling price per unit.
-The cost per unit is 110, so the profit per unit is p - 110.
-
-Yearly profit = (p - 110) * 5040.
-We want this to be at least 626400.
-
-So:
-(p - 110) * 5040 >= 626400
-
-Divide both sides by 5040:
-p - 110 >= 626400 / 5040
-
-Compute 626400 / 5040 ≈ 124.29.
-
-So:
-p - 110 >= 124.29
-p >= 124.29 + 110
-p >= 234.29
-
-We must pick the smallest option that is at least 234.29.
-Options are 226, 230, 240, 260, 280.
-The smallest value that is large enough is 240, which is option C.
+They make 420 units per month for 12 months, so in a year they sell 420 × 12 = 5040 components. Production cost per unit is 110, so total yearly cost is 5040 × 110 = 554400. Let p be the selling price per component. Yearly revenue is 5040p, so profit is 5040p − 554400. We need 5040p − 554400 ≥ 626400, so 5040p ≥ 1180800 and p ≥ 1180800 ÷ 5040 ≈ 234.3. The smallest answer choice at least this large is 240 which is option C.
 <cot_end>
 <ans>C</ans>
 
 Example 2:
 Question: In how many ways can the letters of the word "PROBLEC" be rearranged to make 7 letter words such that none of the letters repeat?\n# Answer option: ['A)2!', 'B)3!', 'C)7!', 'D)8!', 'E)9!']
 <cot_start>
-The word PROBLEC has 7 different letters.
-
-We want to arrange all 7 letters in order, without repetition.
-The number of ways to arrange 7 distinct items is 7 factorial, written 7!.
-
-So the answer is 7!, which corresponds to option C.
+There are 7 distinct letters in "PROBLEC" and we want 7-letter arrangements with no repetition, so we are just counting permutations of 7 distinct objects. The number of such arrangements is 7!, which corresponds to option C.
 <cot_end>
 <ans>C</ans>
 
 Example 3:
 Question: An exam is given in a certain class. The average (arithmetic mean) of the highest score and the lowest score is equal to x. If the average score for the entire class is equal to y and there are z students in the class, where z > 5, then in terms of x, y, and z, what is the average score for the class excluding the highest and lowest scorers?\n# Answer option: ['A)(zy – 2x)/z', 'B)(zy – 2)/z', 'C)(zx – y)/(z – 2)', 'D)(zy – 2x)/(z -2)', 'E)(zy – x)/(z + 2)']
 <cot_start>
-Let S be the sum of all scores.
-The average for the whole class is y, and there are z students, so:
-S / z = y
-This means S = z * y.
-
-Let H be the highest score and L be the lowest score.
-We are told that the average of H and L is x:
-(H + L) / 2 = x
-So H + L = 2x.
-
-If we remove the highest and lowest scores, the new total is:
-S - (H + L) = z * y - 2x.
-
-The number of remaining students is z - 2.
-
-So the average for the remaining students is:
-(z * y - 2x) / (z - 2).
-
-This matches option D.
+Let the highest score be H and the lowest be L. We are told (H + L)/2 = x, so H + L = 2x. The total sum of all z scores is zy, so the sum of the remaining z − 2 scores is zy − (H + L) = zy − 2x. The average excluding the highest and lowest is therefore (zy − 2x)/(z − 2). This matches option D.
 <cot_end>
 <ans>D</ans>
 
 Example 4:
 Question: Find the total no. of distinct bike no.'s that can beformed using 2 letters followed by 2 no.'s. How many letters need to be distinct?\n# Answer option: ['A)65000', 'B)64543', 'C)74325', 'D)74453', 'E)97656']
 <cot_start>
-We want a pattern: Letter, Letter, Digit, Digit.
-
-Assume the two letters must be different from each other, and the digits can repeat.
-
-For the first letter, there are 26 choices.
-For the second letter, there are 25 choices, because it must be different from the first letter.
-For each digit position, there are 10 choices (0 to 9).
-
-Total number of plates:
-26 * 25 * 10 * 10 = 26 * 25 * 100 = 65000.
-
-So the correct answer is 65000, which is option A.
+We want a pattern: Letter, Letter, Digit, Digit. Assume the two letters must be different from each other, and the digits can repeat. For the first letter, there are 26 choices. For the second letter, there are 25 choices, because it must be different from the first letter. For each digit position, there are 10 choices (0 to 9). Total number of plates: 26 * 25 * 10 * 10 = 26 * 25 * 100 = 65000. So the correct answer is 65000, which is option A.
 <cot_end>
 <ans>A</ans>
 
 Example 5:
 Question: A wire in the shape of rectangle of length 27 cm and breadth 17 cm is rebent to form a square. What will be the measure of each side?\n# Answer option: ['A)9', 'B)11', 'C)31', 'D)25', 'E)22']
 <cot_start>
-The wire length is equal to the perimeter of the rectangle.
-
-Perimeter of the rectangle:
-2 * (27 + 17) = 2 * 44 = 88 cm.
-
-The same wire is bent into a square, so the perimeter of the square is also 88 cm.
-Let s be the side of the square.
-
-For a square, perimeter = 4 * s.
-So:
-4 * s = 88
-s = 88 / 4 = 22
-
-So the side of the square is 22 cm, which is option E.
+First find the perimeter of the rectangle: 2 × (27 + 17) = 2 × 44 = 88 cm. When the wire is bent into a square, the perimeter stays 88 cm, so each side of the square is 88 ÷ 4 = 22 cm, which is option E.
 <cot_end>
 <ans>E</ans>
 
 Example 6:
 Question: A point on the edge of a fan blade that is rotating in a plane 10 centimeters from the center of the fan. What is the distance traveled, in centimeters, by this point after 30 seconds when the fan runs at the rate of 300 revolutions per minutes?\n# Answer option: ['A)750pi', 'B)1500pi', 'C)1875pi', 'D)3000pi', 'E)7500pi']
 <cot_start>
-The point is 10 cm from the center, so it moves on a circle with radius 10 cm.
-
-The circumference of a circle is 2 * pi * radius.
-So one full revolution covers:
-2 * pi * 10 = 20 * pi centimeters.
-
-The fan rotates at 300 revolutions per minute.
-30 seconds is half a minute, so the number of revolutions in 30 seconds is:
-300 * 0.5 = 150.
-
-Total distance traveled is:
-150 * (20 * pi) = 3000 * pi centimeters.
-
-So the correct option is 3000pi, which is option D.
+A point 10 cm from the center moves in a circle of radius 10, so one full revolution has length 2πr = 2π·10 = 20π centimeters. The fan runs at 300 revolutions per minute; in 30 seconds (which is half a minute) it makes 300·0.5 = 150 revolutions. The total distance traveled is 150·20π = 3000π centimeters, which matches option D.
 <cot_end>
 <ans>D</ans>
 
 ----
-Now, answer the following question. State the final answer in the exact format: `<ans> Letter</ans>`.
+Now, answer the following question. State the final answer in the exact format: `<ans>Letter</ans>`.
 
 Question: {question}
