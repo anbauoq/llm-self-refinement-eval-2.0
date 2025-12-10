@@ -264,17 +264,31 @@ def strip_answer_from_hint(hint: str, answer: str) -> str:
 
 def extract_hint_text(output: str) -> str:
     """
-    Extract inner text from the <hint>...</hint> block.
+    Extract inner text from <hint>...</hint> or <hints>...</hints> blocks.
 
-    If no such block exists, return the full decoded output stripped.
-    This way, non-tagged but reasonable hints are still usable.
+    - If such a block exists, return the inner text of the *last* one.
+    - Accepts both <hint> and <hints> (case-insensitive).
+    - Self-closing tags like <hints/> cannot contain inner text, so they are
+      effectively ignored; if only those are present, we fall back to the full
+      output stripped.
+    - If no such block exists, return the full decoded output stripped.
     """
     if not output:
         return ""
-    matches = re.findall(r"<hint>(.*?)</hint>", output, flags=re.DOTALL | re.IGNORECASE)
+
+    # Match either <hint>...</hint> or <hints>...</hints>, any casing, multiline.
+    # `hint[s]?` allows `hint` or `hints` on both open and close tags.
+    matches = re.findall(
+        r"<hint[s]?\b[^>]*>(.*?)</hint[s]?>",
+        output,
+        flags=re.DOTALL | re.IGNORECASE,
+    )
+
     if not matches:
-        # No <hint> tags – fall back to using the whole output as the hint
+        # No paired <hint>/<hints> tags – fall back to using the whole output
+        # as the hint (even if there's a self-closing <hints/> somewhere).
         return output.strip()
+
     # Take the last block in case the model produced multiple
     inner = matches[-1].strip()
     return inner
