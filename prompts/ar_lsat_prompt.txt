@@ -1,4 +1,4 @@
-Answer the following multiple-choice question by showing your full reasoning between <cot_start> and <cot_end>. 
+Answer a multiple-choice question by showing your full reasoning between <cot_start> and <cot_end>. 
 Then on a new line, write your final answer choice between <ans> </ans>.
 
 Important:
