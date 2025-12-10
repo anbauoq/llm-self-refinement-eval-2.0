@@ -30,7 +30,7 @@ TOKENS=(1024)
 INPUT_DIR="data"
 OUTPUT_DIR_REASONING="results/sample_results/reasoning"
 OUTPUT_DIR_NONREASONING="results/sample_results/nonreasoning"
-MAX_SAMPLES=10
+MAX_SAMPLES=5
 BATCH_SIZE=4
 
 # Non-reasoning

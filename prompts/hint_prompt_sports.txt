@@ -1,14 +1,6 @@
 You answered this question incorrectly.
 
-Question: {question}
-Your reasoning: {chain_of_thought}
-Your answer: {predicted_answer}
-Correct answer: {correct_answer}
-
-Your task:
-
-1. Figure out WHY your previous reasoning led to the wrong answer.
-2. Write a HINT that contains only the extra facts or reasoning patterns that would have helped you answer correctly if it had been included in the original question.
+Your job is to analyze your earlier reasoning and then write a short HINT that would have helped you solve the problem correctly, if it had been included in the original question.
 
 IMPORTANT FORMAT RULES FOR THE HINT:
 - Do NOT say whether the sentence is plausible or not.
@@ -55,6 +47,13 @@ Your answer: 0
 Correct answer: 1
 <hint>Liam Hendriks is a Major League Baseball pitcher, and in some games pitchers do bat, so consider that a “double” is a standard batting result and that pitchers can sometimes achieve this in the World Series.</hint>
 
-Now, based on the question, your reasoning, your answer, and the correct answer given at the top, write a new hint.
+----
+
+Now, based on the question, your reasoning, your answer, and the correct answer, write a new hint.
 
 Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no bullet points and no extra commentary.
+
+Question: {question}
+Your reasoning: {chain_of_thought}
+Your answer: {predicted_answer}
+Correct answer: {correct_answer}

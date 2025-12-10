@@ -45,17 +45,22 @@ def _build_generation_kwargs(
     is_retry: bool,
     attempt_num: int,
     temperature: float,
-    top_p: float
+    top_p: float,
+    min_new_tokens: int = 64,  
 ) -> Dict[str, Any]:
     """Central builder for model.generate kwargs with batching support."""
     pad_id, eos_id = _resolve_pad_eos(tokenizer)
 
+    max_new = _parse_max_new_tokens(max_tokens, default=default_tokens)
+
     gen_kwargs: Dict[str, Any] = {
-        "max_new_tokens": _parse_max_new_tokens(max_tokens, default=default_tokens),
+        "max_new_tokens": max_new,
+        # don't let min_new_tokens exceed max_new_tokens
+        "min_new_tokens": min(min_new_tokens, max_new),
         "pad_token_id": pad_id,
         "use_cache": True,
         "do_sample": False,
-        "no_repeat_ngram_size": 3
+        "no_repeat_ngram_size": 3,
     }
     if eos_id is not None:
         gen_kwargs["eos_token_id"] = eos_id
@@ -69,7 +74,6 @@ def _build_generation_kwargs(
         )
 
     return gen_kwargs
-
 
 def _batch_data(data: List, batch_size: int) -> List[List]:
     """Split data into batches."""
@@ -182,6 +186,8 @@ def solve_questions(
             
             pending_indices = list(range(batch_size_actual)) # initially all indices, all questions are pending (unanswered)
 
+            last_attempt_is_retry: List[bool] = [False] * batch_size_actual
+
             for attempt in range(max_attempts):
 
                 # where im going to come at the lasttttttt
@@ -209,7 +215,7 @@ def solve_questions(
                 )
                 inputs = {k: v.to(model.device) for k, v in padded.items()}
 
-                # All rows have the same sequence length after padding
+                # all rows have the same sequence length after padding
                 prompt_length = inputs["input_ids"].shape[1]
 
                 gen_kwargs = _build_generation_kwargs(
@@ -218,14 +224,14 @@ def solve_questions(
                     default_tokens=DEFAULT_SOLVE_MAX_TOKENS,
                     is_retry=is_retry,
                     attempt_num=attempt,
-                    temperature=0.7,
-                    top_p=0.95,
+                    temperature=0.5,
+                    top_p=0.9,
                 )
 
-                # Generate for unresolved subset
+
                 output_ids = model.generate(**inputs, **gen_kwargs)
 
-                # Decode and update only unresolved items
+                # decode and update only unresolved items
                 for local_idx, output in enumerate(output_ids):
                     global_idx = current_indices[local_idx]
                     processed = processed_batch[global_idx]
@@ -252,7 +258,8 @@ def solve_questions(
                         "full_output": trimmed_decoded,
                         "ground_truth": processed["answer"],
                         "predicted_answer": pred_answer,
-                        "is_correct": is_correct
+                        "is_correct": is_correct,
+                        "from_retry": last_attempt_is_retry[global_idx]
                     }
 
 
@@ -298,7 +305,7 @@ def generate_hints(
     tokenizer,
     dataset_name: str,
     num_attempts: int = 3,
-    temperature: float = 0.7,
+    temperature: float = 0.6,
     max_tokens: Optional[int] = None,
     batch_size: int = DEFAULT_BATCH_SIZE,
 ) -> List[Dict[str, Any]]:
@@ -371,7 +378,7 @@ def generate_hints(
                     # Remember last decoded attempt for fallback (raw text)
                     last_decoded[global_idx] = decoded
 
-                    # Extract just the inner <hint>...</hint> if present
+                    # Extract hint sentences if present
                     hint_text = extract_hint_text(decoded)
 
                     # Accept only non-leaking hints here
@@ -388,7 +395,7 @@ def generate_hints(
                 if res is None:
                     item_with_hint = batch[idx].copy()
                     raw = last_decoded.get(idx, "")
-                    hint_text = extract_hint_text(raw) if raw else ""
+                    hint_text = extract_hint_text(raw)
 
                     if hint_text:
                         # If all attempts leaked, strip the answer out and reuse the rest

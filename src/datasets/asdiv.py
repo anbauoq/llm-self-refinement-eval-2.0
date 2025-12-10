@@ -37,23 +37,40 @@ def extract_answer(text: str) -> str:
     Generic numeric extractor for GSM/ASDiv-style prompts.
 
     Priority:
-      1) Last <ans>...</ans> block
+      1) Last <ans>...</ans> block (tolerant to whitespace + nesting)
       2) Anchored phrases like 'final answer is 42'
       3) Else: 'no_final_answer'
     """
     if not text or not text.strip():
         return "no_final_answer"
 
-    raw = text
-    t = raw.strip()
+    t = text.strip()
 
-    # 1) <ans>...</ans>, take LAST one
-    ans_blocks = re.findall(r"<ans>(.*?)</ans>", t, flags=re.IGNORECASE | re.DOTALL)
+    # 1) <ans>...</ans>, take LAST one, tolerate `< ans >` spacing + nested tags
+    ans_blocks = re.findall(
+        r"<\s*ans\s*>(.*?)</\s*ans\s*>",
+        t,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
     if ans_blocks:
-        candidate = ans_blocks[-1].strip()
-        m = re.search(r"[-+]?\$?\d+(?:[.,]\d+)?%?", candidate)
-        if m:
-            return _normalize_number_token(m.group(0))
+        candidate_block = ans_blocks[-1].strip()
+
+        # Strip any nested <ans> tags inside the block
+        candidate_clean = re.sub(
+            r"</?\s*ans\s*>",
+            " ",
+            candidate_block,
+            flags=re.IGNORECASE,
+        ).strip()
+
+        # Pull the last numeric-looking token from inside the block
+        numbers = re.findall(
+            r"[-+]?\$?\d+(?:[.,]\d+)?%?",
+            candidate_clean,
+        )
+        if numbers:
+            return _normalize_number_token(numbers[-1])
+
         return "no_final_answer"
 
     # 2) backup: 'final answer is 42', 'answer: $1,300%', etc.

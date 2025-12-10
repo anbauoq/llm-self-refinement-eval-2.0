@@ -2,16 +2,6 @@ You answered this multiple-choice math question incorrectly.
 
 Your job is to analyze your earlier reasoning and then write a short HINT that would have helped you solve the problem correctly, if it had been included in the original question.
 
-Question: {question}
-Your reasoning: {chain_of_thought}
-Your answer: {predicted_answer}
-Correct answer: {correct_answer}
-
-Your task:
-
-1. Figure out WHY your previous reasoning led to the wrong answer.
-2. Write a HINT that contains only the extra facts or reasoning patterns that would have helped you answer correctly if they had been included in the original question.
-
 IMPORTANT FORMAT RULES FOR THE HINT:
 - Do NOT say whether anything is correct or incorrect.
 - Do NOT write the correct answer or the correct option letter in the hint sentences.
@@ -61,6 +51,13 @@ Your answer: C
 Correct answer: E
 <hint>First compute the perimeter of the original rectangle by adding length and breadth and multiplying by 2, then use that same total length as the perimeter of the square and divide by 4 to obtain the side length.</hint>
 
-Now, based on the question, your reasoning, your answer, and the correct answer given at the top, write a new hint.
+----
+
+Now, based on the question, your reasoning, your answer, and the correct answer, write a new hint.
 
 Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no bullet points and no extra commentary.
+
+Question: {question}
+Your reasoning: {chain_of_thought}
+Your answer: {predicted_answer}
+Correct answer: {correct_answer}

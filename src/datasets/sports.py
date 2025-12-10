@@ -21,22 +21,47 @@ def extract_answer(output: str) -> str:
     Extracts the final 0/1 answer from the model output for the SPORTS prompt.
 
     Priority:
-      1) Last <ans>...</ans> block (expected path)
+      1) Last <ans>...</ans> block (expected path), tolerant to:
+         - `< ans >` vs `<ans>`
+         - nested `<ans><ans>1</ans></ans>`
+         - 'yes'/'no' inside <ans>
       2) Fallback: 'Answer: 0/1/yes/no' patterns
     """
     if not output or not output.strip():
         return "no_final_answer"
 
-    # --- 1) PRIMARY: <ans>...</ans> tags ---
-    ans_blocks = re.findall(r"<ans>(.*?)</ans>", output, flags=re.IGNORECASE | re.DOTALL)
+    # --- 1) PRIMARY: <ans>...</ans> tags (whitespace-tolerant) ---
+    ans_blocks = re.findall(
+        r"<\s*ans\s*>(.*?)</\s*ans\s*>",
+        output,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
     if ans_blocks:
-        candidate = ans_blocks[-1].strip()
-        m_digit = re.search(r"\b([01])\b", candidate)
+        # Take the LAST <ans>...</ans>
+        candidate_block = ans_blocks[-1].strip()
+
+        # Strip any nested <ans> tags inside the block
+        candidate_clean = re.sub(
+            r"</?\s*ans\s*>",
+            " ",
+            candidate_block,
+            flags=re.IGNORECASE,
+        ).strip()
+
+        # First try to find an explicit 0/1
+        m_digit = re.search(r"\b([01])\b", candidate_clean)
         if m_digit:
             return m_digit.group(1)
 
+        # Then try yes/no inside the block
+        m_yn = re.search(r"\b(yes|no)\b", candidate_clean, flags=re.IGNORECASE)
+        if m_yn:
+            return map_to_binary(m_yn.group(1))
+
     # --- 2) FALLBACK: legacy 'Answer: x' patterns, in case model ignores tags ---
-    parts = output.split("<cot_end>")
+
+    # Split off anything after <cot_end> (also tolerate `< cot_end >`)
+    parts = re.split(r"<\s*cot_end\s*>", output, flags=re.IGNORECASE)
     after_cot = parts[-1].lower()
 
     # normalize whitespace

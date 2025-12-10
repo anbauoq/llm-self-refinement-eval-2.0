@@ -217,7 +217,6 @@ def contains_bad_phrases(hint: str, answer: str, dataset_name: str) -> bool:
             rf"the answer is\s*[:\-]?\s*{re.escape(a)}",
             rf"correct answer\s*[:\-]?\s*{re.escape(a)}",
             rf"answer\s*(is|=)\s*{re.escape(a)}",
-            rf"label\s*(is|=)\s*{re.escape(a)}",
         ]
         for pat in patterns:
             if re.search(pat, h):
