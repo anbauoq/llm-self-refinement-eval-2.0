@@ -13,11 +13,11 @@ They make 420 units per month for 12 months, so in a year they sell 420 × 12 = 
 <ans>C</ans>
 
 Example 2:
-Question: In how many ways can the letters of the word "PROBLEC" be rearranged to make 7 letter words such that none of the letters repeat?\n# Answer option: ['A)2!', 'B)3!', 'C)7!', 'D)8!', 'E)9!']
+Question: In how many ways can the letters of the word "BEATLES" be rearranged to make 7 letter words such that none of the letters repeat?\n# Answer option: ['A)7!', 'B)7!/2!', 'C)6!', 'D)5!', 'E)8!']
 <cot_start>
-There are 7 distinct letters in "PROBLEC" and we want 7-letter arrangements with no repetition, so we are just counting permutations of 7 distinct objects. The number of such arrangements is 7!, which corresponds to option C.
+The word "BEATLES" has 7 letters in total, but the letter E appears twice, so there are only 6 distinct letters. We want 7-letter arrangements using all the letters, with no extra repetitions beyond what is already in the word. This is a permutation of a multiset with 7 positions where one letter (E) is repeated twice. The number of distinct arrangements is therefore 7! / 2!. This corresponds to option B.
 <cot_end>
-<ans>C</ans>
+<ans>B</ans>
 
 Example 3:
 Question: An exam is given in a certain class. The average (arithmetic mean) of the highest score and the lowest score is equal to x. If the average score for the entire class is equal to y and there are z students in the class, where z > 5, then in terms of x, y, and z, what is the average score for the class excluding the highest and lowest scorers?\n# Answer option: ['A)(zy – 2x)/z', 'B)(zy – 2)/z', 'C)(zx – y)/(z – 2)', 'D)(zy – 2x)/(z -2)', 'E)(zy – x)/(z + 2)']
@@ -41,11 +41,11 @@ First find the perimeter of the rectangle: 2 × (27 + 17) = 2 × 44 = 88 cm. Whe
 <ans>E</ans>
 
 Example 6:
-Question: A point on the edge of a fan blade that is rotating in a plane 10 centimeters from the center of the fan. What is the distance traveled, in centimeters, by this point after 30 seconds when the fan runs at the rate of 300 revolutions per minutes?\n# Answer option: ['A)750pi', 'B)1500pi', 'C)1875pi', 'D)3000pi', 'E)7500pi']
+Question: A phone has a marked price of $200. It is sold with a 10% discount on the marked price and then a 5% sales tax is applied on the discounted price. What is the final price the customer pays?\n# Answer option: ['A)180', 'B)185', 'C)189', 'D)190', 'E)195']
 <cot_start>
-A point 10 cm from the center moves in a circle of radius 10, so one full revolution has length 2πr = 2π·10 = 20π centimeters. The fan runs at 300 revolutions per minute; in 30 seconds (which is half a minute) it makes 300·0.5 = 150 revolutions. The total distance traveled is 150·20π = 3000π centimeters, which matches option D.
+First apply the 10% discount to $200: 10% of 200 is 20, so the discounted price is 200 − 20 = 180. Then apply 5% tax on 180: 5% of 180 is 0.05 × 180 = 9, so the final price is 180 + 9 = 189. This matches option C.
 <cot_end>
-<ans>D</ans>
+<ans>C</ans>
 
 ----
 Now, answer the following question. State the final answer in the exact format: `<ans>Letter</ans>`.
