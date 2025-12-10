@@ -29,11 +29,11 @@ Question: Four workshops—Data, Ethics, Finance, and Law—are scheduled, one p
 Which one of the following could be the schedule of workshops from Monday through Thursday?
 A) Mon: Data;  Tue: Ethics; Wed: Law;   Thu: Finance
 B) Mon: Ethics; Tue: Finance; Wed: Data;  Thu: Law
-C) Mon: Data;  Tue: Law;    Wed: Finance; Thu: Ethics
+C) Mon: Data;  Tue: Ethics;    Wed: Finance; Thu: Law
 D) Mon: Finance; Tue: Data; Wed: Ethics;  Thu: Law
 E) Mon: Law;    Tue: Finance; Wed: Ethics; Thu: Data
 <cot_start>
-Data must be earlier than Finance, Ethics cannot be Monday, and Law cannot be Thursday. In A, Data is Monday, Ethics Tuesday, Law Wednesday, Finance Thursday; all three rules are satisfied. B fails because Ethics is on Monday. D and E fail because Data is not earlier than Finance. C puts Data Monday, Law Tuesday, Finance Wednesday, Ethics Thursday; this also satisfies all rules, so with the constraints exactly as written both A and C are valid schedules and the question is not uniquely determined. For the template we pick A as one valid answer.
+Data must be earlier than Finance, Ethics cannot be Monday, and Law cannot be Thursday. In A, Data is Monday, Ethics Tuesday, Law Wednesday, Finance Thursday, so all three rules are satisfied. B fails because Ethics is on Monday, C and D fail because Law is on Thursday, and D and E also fail because Data is not earlier than Finance. Therefore only A could be the schedule.
 <cot_end>
 <ans>A</ans>
 
@@ -65,7 +65,7 @@ C) A: green;  B: red;   C: blue
 D) A: blue;   B: blue;  C: red
 E) A: green;  B: blue;  C: red
 <cot_start>
-We need all three colors used exactly once, with A not red, B not blue, and C either green or blue. Checking the choices, only option C assigns A = green, B = red, and C = blue, which uses all three colors once and satisfies all constraints on each house’s color.
+Test each option against the rules: A is invalid because A is red, B is invalid because A is red, D is invalid because A and B are both blue so the colors are not all different, and E is invalid because C is red instead of green or blue; C has A = green (not red), B = red (not blue), and C = blue (green/blue allowed) with all three colors distinct, so it is the only option that satisfies every condition.
 <cot_end>
 <ans>C</ans>
 
