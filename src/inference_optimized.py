@@ -351,7 +351,6 @@ def generate_hints(
 
                 prompt_length = inputs["input_ids"].shape[1]
 
-                # For hints we want sampling every time -> is_retry=True
                 gen_kwargs = _build_generation_kwargs(
                     tokenizer=tokenizer,
                     max_tokens=max_tokens,
