@@ -277,7 +277,8 @@ def solve_questions(
                             "chain_of_thought": cot_fallback,
                             "predicted_answer": None,
                             "ground_truth": processed["answer"],
-                            "is_correct": None
+                            "is_correct": None,
+                            "from_retry": last_attempt_is_retry[idx],
                         }
                     else:
                         batch_results[idx] = {
@@ -287,7 +288,8 @@ def solve_questions(
                             "chain_of_thought": None,
                             "predicted_answer": None,
                             "ground_truth": processed["answer"],
-                            "is_correct": None
+                            "is_correct": None,
+                            "from_retry": last_attempt_is_retry[idx]
                         }
 
             # Extend global results in batch order
