@@ -219,7 +219,7 @@ def solve_questions(
                     default_tokens=DEFAULT_SOLVE_MAX_TOKENS,
                     is_retry=is_retry,
                     attempt_num=attempt,
-                    temperature=0.7,
+                    temperature=0.6,
                     top_p=0.95,
                 )
 

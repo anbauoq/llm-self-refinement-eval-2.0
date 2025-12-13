@@ -13,3 +13,4 @@ def llama_prompt_formatting(prompt: str) -> str:
         "<|eot_id|>"
         "<|start_header_id|>assistant<|end_header_id|>\n\n"
     )
+
