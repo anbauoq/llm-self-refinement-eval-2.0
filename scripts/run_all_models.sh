@@ -9,18 +9,18 @@ USE_OPTIMIZED="${USE_OPTIMIZED:-true}"
 echo "Inference mode: $([ "$USE_OPTIMIZED" = "true" ] && echo "OPTIMIZED" || echo "STANDARD")"
 
 MODELS_NON_REASONING=(
-  "google/gemma-2-2b-it"
-  "meta-llama/Meta-Llama-3.1-8B-Instruct"
-  "microsoft/Phi-4-mini-instruct"
   "Qwen/Qwen2.5-Math-1.5B"
   "Qwen/Qwen2.5-Math-7B"
+  "microsoft/Phi-4-mini-instruct"
+  "google/gemma-2-2b-it"
+  "meta-llama/Meta-Llama-3.1-8B-Instruct"
 )
 
 MODELS_REASONING=(
-  "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
-  "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
-  "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
   "microsoft/Phi-4-mini-reasoning"
+  "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+  "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
+  "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
 )
 
 DATASETS=( "ar_lsat" "asdiv" "aqua" "gsm8k" "sports" )
