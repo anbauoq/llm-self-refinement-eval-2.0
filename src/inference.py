@@ -1,95 +1,24 @@
 #!/usr/bin/env python3
-# inference_optimized.py - Faster batched inference with FlashAttention
+# inference.py
 from __future__ import annotations
-
-from typing import Any, Dict, Iterable, List, Optional
 import torch
-from tqdm import tqdm
 import logging
-
-from utils import (
-    format_prompt,
-    format_hint_prompt,
+from tqdm import tqdm
+from typing import Any, Dict, Iterable, List, Optional
+from prompts import format_initial_prompt, format_post_hint_prompt, format_hint_prompt
+from hints import    extract_hint_text, is_valid_hint, strip_answer_from_hint
+from utils import ( 
     extract_cot,
     exact_match,
-    _parse_max_new_tokens,
-    extract_hint_text,
-    is_valid_hint,
-    strip_answer_from_hint
+    parse_max_new_tokens,
+    resolve_pad_eos,
+    batch_data,
+    strip_prompt_from_outputs
 )
 
-# --- Constants ---
-DEFAULT_SOLVE_MAX_TOKENS = 2048
-DEFAULT_HINT_MAX_TOKENS = 1024
-RETRY_SEED_BASE = 21
-DEFAULT_BATCH_SIZE = 8
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-def _resolve_pad_eos(tokenizer) -> tuple[Optional[int], Optional[int]]:
-    """Pick safe pad/eos once and reuse."""
-    eos_id = getattr(tokenizer, "eos_token_id", None)
-    pad_id = getattr(tokenizer, "pad_token_id", None)
-    if pad_id is None:
-        pad_id = eos_id if eos_id is not None else 0
-    return pad_id, eos_id
-
-
-def _build_generation_kwargs(
-    tokenizer,
-    max_tokens: Optional[int],
-    default_tokens: int,
-    *,
-    is_retry: bool,
-    attempt_num: int,
-    temperature: float,
-    top_p: float,
-    min_new_tokens: int = 64,
-) -> Dict[str, Any]:
-    pad_id, eos_id = _resolve_pad_eos(tokenizer)
-    max_new = _parse_max_new_tokens(max_tokens, default=default_tokens)
-
-    gen_kwargs: Dict[str, Any] = {
-        "max_new_tokens": max_new,
-        "min_new_tokens": min(min_new_tokens, max_new),
-        "pad_token_id": pad_id,
-        "use_cache": True,
-        "do_sample": True,
-        "temperature": temperature,
-        "top_p": top_p,
-        "no_repeat_ngram_size": 3,
-    }
-    if eos_id is not None:
-        gen_kwargs["eos_token_id"] = eos_id
-
-    if is_retry:
-        torch.manual_seed(RETRY_SEED_BASE + attempt_num)
-
-    return gen_kwargs
-
-
-def _batch_data(data: List, batch_size: int) -> List[List]:
-    """Split data into batches."""
-    return [data[i:i + batch_size] for i in range(0, len(data), batch_size)]
-
-
-def _strip_prompt_from_outputs(
-    output_ids: torch.Tensor,
-    prompt_length: int,
-) -> torch.Tensor:
-    """
-    Strip the prompt tokens from the generated sequence.
-
-    Works for decoder-only models with padding on either side, and is safe-ish
-    for encoder-decoder models (falls back to returning the whole output if
-    it's shorter than prompt_length).
-    """
-    if output_ids.size(0) > prompt_length:
-        return output_ids[prompt_length:]
-    return output_ids
-
 
 
 def solve_questions(
@@ -97,28 +26,25 @@ def solve_questions(
     model,
     tokenizer,
     dataset_module,
+    model_name,
     inject_hint: bool = False,
-    max_attempts: int = 2,
+    max_attempts: int = 3,
     max_tokens: Optional[int] = None,
-    batch_size: int = DEFAULT_BATCH_SIZE,
+    batch_size: int = 8,
 ) -> List[Dict[str, Any]]:
-    """
-    Batched inference for faster processing, with per-item retries.
-    """
     data_list = list(data) #just making a list of dictionaries, our dataset, each dict is one question with its corresponding features
     results: List[Dict[str, Any]] = [] # just initializing object where results will be stored?
     dataset_name = dataset_module.__name__.split(".")[-1] # since dataset_module is given by utils.asdiv, extracting dataset name in this way
 
     # Process in batches
-    batches = _batch_data(data_list, batch_size) # dividing our data into batches, list of lists, each of which contains batch_size dictionaries
+    batches = batch_data(data_list, batch_size) # dividing our data into batches, list of lists, each of which contains batch_size dictionaries
 
     with torch.inference_mode(): 
         
         retry_suffix_text = """
         IMPORTANT FORMAT REMINDER:
-        - You must write your full reasoning between <cot_start> and <cot_end>.
-        - Then, on a NEW line after the reasoning, you MUST output ONLY the final answer
-          wrapped in <ans> and </ans>.
+        - You must write your full reasoning between <think> and </think>.
+        - Then, on a NEW line after the reasoning, you MUST output ONLY the final answer.
           """
   
         retry_suffix_ids: List[int] = tokenizer(
@@ -145,13 +71,18 @@ def solve_questions(
                         "answer": item["ground_truth"]
                     }
 
-                # just creating prompt
-                base_prompt = format_prompt(
-                    processed["question"],
-                    inject_hint=inject_hint,
-                    hint=item.get("hint_sentence", ""),
-                    dataset_name=dataset_name,
-                )
+                if inject_hint:
+                    base_prompt = format_post_hint_prompt(
+                        question = processed["question"],
+                        model = model_name,
+                        hint=item.get("hint_sentence", ""),
+                        dataset_name=dataset_name,)
+                    
+                else:
+                    base_prompt = format_initial_prompt(
+                        question = processed["question"],
+                        model = model_name,
+                        dataset_name=dataset_name)
 
                 processed_batch.append(processed) # must have a list with all questions from the given batch
                 prompts_batch.append(base_prompt) # here corresponding prompts must be added
@@ -165,7 +96,6 @@ def solve_questions(
                 return_tensors=None,
                 padding=False
             )
-
             
             base_input_ids: List[List[int]] = base_encoded["input_ids"] # tokenizations for all questions in the current batch
 
@@ -173,7 +103,6 @@ def solve_questions(
 
             batch_size_actual = len(batch) # just for the case when last batch is smaller
             
-            # One slot per item in the batch; None means "still unresolved"
             
             batch_results: List[Optional[Dict[str, Any]]] = [None] * batch_size_actual # keeping status weather pred_answer succesfully extracted or no, initially oll are not so None
 
@@ -213,15 +142,23 @@ def solve_questions(
                 # all rows have the same sequence length after padding
                 prompt_length = inputs["input_ids"].shape[1]
 
-                gen_kwargs = _build_generation_kwargs(
-                    tokenizer=tokenizer,
-                    max_tokens=max_tokens,
-                    default_tokens=DEFAULT_SOLVE_MAX_TOKENS,
-                    is_retry=is_retry,
-                    attempt_num=attempt,
-                    temperature=0.6,
-                    top_p=0.95,
-                )
+                pad_id, eos_id = resolve_pad_eos(tokenizer)
+                max_new = parse_max_new_tokens(max_tokens, default=2048)
+
+                gen_kwargs: Dict[str, Any] = {
+                    "max_new_tokens": max_new,
+                    "min_new_tokens": min(64, max_new),
+                    "pad_token_id": pad_id,
+                    "use_cache": True,
+                    "do_sample": True,
+                    "temperature": 0.6,
+                    "top_p": 0.95
+                }
+                if eos_id is not None:
+                    gen_kwargs["eos_token_id"] = eos_id
+
+                if is_retry:
+                    torch.manual_seed(21 + attempt)
 
                 output_ids = model.generate(**inputs, **gen_kwargs)
 
@@ -230,7 +167,7 @@ def solve_questions(
                     global_idx = current_indices[local_idx]
                     processed = processed_batch[global_idx]
                 
-                    new_ids = _strip_prompt_from_outputs(output, prompt_length)
+                    new_ids = strip_prompt_from_outputs(output, prompt_length)
                     trimmed_decoded = tokenizer.decode(
                         new_ids, skip_special_tokens=True
                     ).strip()
@@ -304,9 +241,8 @@ def generate_hints(
     tokenizer,
     dataset_name: str,
     num_attempts: int = 3,
-    temperature: float = 0.6,
     max_tokens: Optional[int] = None,
-    batch_size: int = DEFAULT_BATCH_SIZE,
+    batch_size: int = 8
 ) -> List[Dict[str, Any]]:
     """
     Batched hint generation with per-item retries and proper fallback to last decoded hint.
@@ -314,7 +250,7 @@ def generate_hints(
     data_list = list(data)
     hints: List[Dict[str, Any]] = []
 
-    batches = _batch_data(data_list, batch_size)
+    batches = batch_data(data_list, batch_size)
 
     with torch.inference_mode():
         for batch in tqdm(batches, desc=f"Generating hints (batch_size={batch_size})"):
@@ -351,15 +287,22 @@ def generate_hints(
 
                 prompt_length = inputs["input_ids"].shape[1]
 
-                gen_kwargs = _build_generation_kwargs(
-                    tokenizer=tokenizer,
-                    max_tokens=max_tokens,
-                    default_tokens=DEFAULT_HINT_MAX_TOKENS,
-                    is_retry=True,
-                    attempt_num=attempt,
-                    temperature=temperature,
-                    top_p=0.95
-                )
+                pad_id, eos_id = resolve_pad_eos(tokenizer)
+                max_new = parse_max_new_tokens(max_tokens, default=1024)
+
+                gen_kwargs: Dict[str, Any] = {
+                    "max_new_tokens": max_new,
+                    "min_new_tokens": min(64, max_new),
+                    "pad_token_id": pad_id,
+                    "use_cache": True,
+                    "do_sample": True,
+                    "temperature": 0.6,
+                    "top_p": 0.95
+                }
+                if eos_id is not None:
+                    gen_kwargs["eos_token_id"] = eos_id
+
+                torch.manual_seed(21 + attempt)
 
                 out_ids = model.generate(**inputs, **gen_kwargs)
 
@@ -368,7 +311,7 @@ def generate_hints(
                     global_idx = pending_indices[local_idx]
                     item = batch[global_idx]
 
-                    new_ids = _strip_prompt_from_outputs(output, prompt_length)
+                    new_ids = strip_prompt_from_outputs(output, prompt_length)
                     decoded = tokenizer.decode(
                         new_ids, skip_special_tokens=True
                     ).strip()

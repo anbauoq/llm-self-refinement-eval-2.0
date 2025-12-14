@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -20,56 +20,77 @@ def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "id": item.get("id"),
         "question": full_question,
-        "answer": item["answer"]
+        "answer": item["answer"],
     }
 
 
 def extract_answer(text: str) -> str:
     """
-    Extract final MCQ letter (A–E) from model output for AQuA-style prompts.
+    Extract final MCQ letter (A–E) from model output.
 
     Priority:
-      1) Last <ans>...</ans> block (primary, expected path), tolerant to:
-         - `< ans >` vs `<ans>`
-         - nested `<ans><ans>E</ans></ans>`
-      2) Anchored phrases like 'final answer is C'
-      3) Otherwise: 'no_final_answer'
+      1) Last <ans>...</ans> OR <answer>...</answer> block (tolerant to whitespace + nesting)
+      2) Last \\boxed{...} (e.g., \\boxed{C}, \\boxed{\\text{C}}, \\boxed{(C)})
+      3) Anchored phrases like 'final answer is C'
+      4) Otherwise: 'no_final_answer'
     """
     if not text or not text.strip():
         return "no_final_answer"
 
     t = text.strip()
 
-    # 1) Prefer explicit <ans>...</ans> tag, take the LAST one
-    #    Be tolerant to whitespace in the tag name: < ans > ... </ ans >
-    ans_blocks = re.findall(
-        r"<\s*ans\s*>(.*?)</\s*ans\s*>",
+    def _pick_letter(blob: str):
+        if not blob:
+            return None
+        s = blob.strip()
+
+        m = re.fullmatch(r"[A-E]", s, flags=re.IGNORECASE)
+        if m:
+            return m.group(0).upper()
+
+        m = re.search(r"\b([A-E])\b", s, flags=re.IGNORECASE)
+        if m:
+            return m.group(1).upper()
+
+        m = re.search(
+            r"[\(\[\{<\*\"']\s*([A-E])\s*[\)\]\}>\"\*']",
+            s,
+            flags=re.IGNORECASE,
+        )
+        if m:
+            return m.group(1).upper()
+
+        return None
+
+    # 1) <ans>...</ans> or <answer>...</answer> (take LAST)
+    tag_blocks = re.findall(
+        r"<\s*(ans|answer)\s*>(.*?)</\s*\1\s*>",
         t,
         flags=re.IGNORECASE | re.DOTALL,
     )
+    if tag_blocks:
+        _, block = tag_blocks[-1]
+        block = block.strip()
 
-    if ans_blocks:
-        candidate_block = ans_blocks[-1].strip()
+        # strip nested <ans>/<answer> tags inside
+        clean = re.sub(r"</?\s*(?:ans|answer)\s*>", " ", block, flags=re.IGNORECASE).strip()
 
-        # Strip any nested <ans> tags inside the block
-        candidate_block_clean = re.sub(
-            r"</?\s*ans\s*>",
-            " ",
-            candidate_block,
-            flags=re.IGNORECASE,
-        ).strip()
+        letter = _pick_letter(clean)
+        if letter:
+            return letter
 
-        # First, require that the whole thing is just a single letter A–E
-        m_exact = re.fullmatch(r"[A-E]", candidate_block_clean, flags=re.IGNORECASE)
-        if m_exact:
-            return m_exact.group(0).upper()
+    # 2) \\boxed{...} (take LAST)
+    boxed = re.findall(r"\\boxed\s*\{([^}]*)\}", t, flags=re.IGNORECASE | re.DOTALL)
+    if boxed:
+        inside = boxed[-1].strip()
+        # remove common latex wrappers like \text{C}, \mathbf{C}, etc.
+        inside = re.sub(r"\\[a-zA-Z]+\s*\{([^}]*)\}", r"\1", inside).strip()
 
-        # If it's not *just* a letter but contains one, grab that
-        m_inside = re.search(r"\b([A-E])\b", candidate_block_clean, flags=re.IGNORECASE)
-        if m_inside:
-            return m_inside.group(1).upper()
+        letter = _pick_letter(inside)
+        if letter:
+            return letter
 
-    # 2) Strong anchored patterns (fallback if no usable <ans> block)
+    # 3) Anchored phrases
     anchored = re.findall(
         r"(?:final\s*)?(?:answer|ans\.?|correct\s*answer)"
         r"\s*(?:is|:|=)?\s*[\*\(\[\{\"']*([A-E])",
@@ -79,5 +100,4 @@ def extract_answer(text: str) -> str:
     if anchored:
         return anchored[-1].upper()
 
-    # 3) No safe signal - treat as no final answer
     return "no_final_answer"

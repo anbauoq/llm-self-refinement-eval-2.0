@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# run_optimized.py - Faster inference with bfloat16, FlashAttention, and batching
+# run.py - Fast inference with bfloat16, FlashAttention, and batching
 import torch
 import importlib
 import logging
 from argparse import ArgumentParser
 from pathlib import Path
-from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
-from inference_optimized import solve_questions, generate_hints
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from inference import solve_questions, generate_hints
 from utils import load_data, save_data
 
 # Set up a logger for better feedback
@@ -133,7 +133,8 @@ def run_pipeline(args: ArgumentParser):
         initial_results = solve_questions(
             raw_data, model, tokenizer, dataset_module, 
             max_tokens=args.max_tokens,
-            batch_size=args.batch_size
+            batch_size=args.batch_size,
+            model_name = args.model_path
         )
         save_data(initial_results, initial_results_path)
     else:
@@ -160,7 +161,7 @@ def run_pipeline(args: ArgumentParser):
             tokenizer,
             dataset_name=args.dataset,
             max_tokens=args.max_tokens,
-            batch_size=args.batch_size,
+            batch_size=args.batch_size
         )
 
 
@@ -175,7 +176,8 @@ def run_pipeline(args: ArgumentParser):
         hint_results, model, tokenizer, dataset_module, 
         inject_hint=True, 
         max_tokens=args.max_tokens,
-        batch_size=args.batch_size
+        batch_size=args.batch_size,
+        model_name = args.model_path
     )
     save_data(post_results, post_hint_path)
 

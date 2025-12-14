@@ -2,6 +2,9 @@ Answer a multiple-choice question by showing your full reasoning between <think>
 Then on a new line, write your final answer choice between <ans> </ans>.
 
 Important:
+Your output MUST have this structure, in this order:
+  1) A reasoning section between <think> and </think>.
+  2) 
 - The choices are always labeled A), B), C), D), E).
 - Inside <ans> </ans> you must output ONLY a single capital letter: A, B, C, D, or E. No extra text.
 

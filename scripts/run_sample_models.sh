@@ -1,10 +1,6 @@
 #!/bin/bash
 # set -euo pipefail
 
-# # Initialize conda
-# source ~/miniforge3/etc/profile.d/conda.sh
-# conda activate self_play
-
 # Use optimized inference by default (can override with USE_OPTIMIZED=false)
 USE_OPTIMIZED="${USE_OPTIMIZED:-true}"
 echo "Inference mode: $([ "$USE_OPTIMIZED" = "true" ] && echo "OPTIMIZED" || echo "STANDARD")"
@@ -12,7 +8,7 @@ echo "Inference mode: $([ "$USE_OPTIMIZED" = "true" ] && echo "OPTIMIZED" || ech
 MODELS_NON_REASONING=(
   "google/gemma-2-2b-it"
   #"meta-llama/Meta-Llama-3.1-8B-Instruct"
-  "microsoft/Phi-4-mini-instruct"
+  #"microsoft/Phi-4-mini-instruct"
   "Qwen/Qwen2.5-Math-1.5B"
   #"Qwen/Qwen2.5-Math-7B"
 )
@@ -31,7 +27,7 @@ INPUT_DIR="data"
 OUTPUT_DIR_REASONING="results/sample_results/reasoning"
 OUTPUT_DIR_NONREASONING="results/sample_results/nonreasoning"
 MAX_SAMPLES=5
-BATCH_SIZE=4
+BATCH_SIZE=2
 
 # Non-reasoning
 for model in "${MODELS_NON_REASONING[@]}"; do
@@ -40,7 +36,7 @@ for model in "${MODELS_NON_REASONING[@]}"; do
       echo "Running $model on $dataset with max_tokens=$t"
       
       if [ "$USE_OPTIMIZED" = "true" ]; then
-        python src/run_optimized.py \
+        python src/run.py \
           --model_path "$model" \
           --dataset "$dataset" \
           --input_path "$INPUT_DIR/${dataset}.jsonl" \
@@ -68,7 +64,7 @@ for model in "${MODELS_REASONING[@]}"; do
       echo "Running $model on $dataset with max_tokens=$t"
       
       if [ "$USE_OPTIMIZED" = "true" ]; then
-        python src/run_optimized.py \
+        python src/run.py \
           --model_path "$model" \
           --dataset "$dataset" \
           --input_path "$INPUT_DIR/${dataset}.jsonl" \

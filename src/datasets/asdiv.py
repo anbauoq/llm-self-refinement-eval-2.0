@@ -32,48 +32,60 @@ def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+import re
+
 def extract_answer(text: str) -> str:
     """
     Generic numeric extractor for GSM/ASDiv-style prompts.
 
     Priority:
-      1) Last <ans>...</ans> block (tolerant to whitespace + nesting)
-      2) Anchored phrases like 'final answer is 42'
-      3) Else: 'no_final_answer'
+      1) Last <ans>...</ans> OR <answer>...</answer> block (tolerant to whitespace + nesting)
+      2) Last \\boxed{...} (e.g., \\boxed{42}, \\boxed{\\text{42}}, \\boxed{$1,300})
+      3) Anchored phrases like 'final answer is 42'
+      4) Else: 'no_final_answer'
     """
     if not text or not text.strip():
         return "no_final_answer"
 
     t = text.strip()
 
-    # 1) <ans>...</ans>, take LAST one, tolerate `< ans >` spacing + nested tags
-    ans_blocks = re.findall(
-        r"<\s*ans\s*>(.*?)</\s*ans\s*>",
+    def _extract_last_number(blob: str) -> str | None:
+        if not blob:
+            return None
+        # keep this numeric regex consistent with your original
+        numbers = re.findall(r"[-+]?\$?\d+(?:[.,]\d+)?%?", blob)
+        if not numbers:
+            return None
+        return _normalize_number_token(numbers[-1])
+
+    # 1) <ans>...</ans> or <answer>...</answer> (take LAST)
+    tag_blocks = re.findall(
+        r"<\s*(ans|answer)\s*>(.*?)</\s*\1\s*>",
         t,
         flags=re.IGNORECASE | re.DOTALL,
     )
-    if ans_blocks:
-        candidate_block = ans_blocks[-1].strip()
+    if tag_blocks:
+        _, block = tag_blocks[-1]
+        block = block.strip()
 
-        # Strip any nested <ans> tags inside the block
-        candidate_clean = re.sub(
-            r"</?\s*ans\s*>",
-            " ",
-            candidate_block,
-            flags=re.IGNORECASE,
-        ).strip()
+        # strip nested tags inside the block
+        clean = re.sub(r"</?\s*(?:ans|answer)\s*>", " ", block, flags=re.IGNORECASE).strip()
 
-        # Pull the last numeric-looking token from inside the block
-        numbers = re.findall(
-            r"[-+]?\$?\d+(?:[.,]\d+)?%?",
-            candidate_clean,
-        )
-        if numbers:
-            return _normalize_number_token(numbers[-1])
+        num = _extract_last_number(clean)
+        return num if num is not None else "no_final_answer"
 
-        return "no_final_answer"
+    # 2) \\boxed{...} (take LAST)
+    boxed = re.findall(r"\\boxed\s*\{([^}]*)\}", t, flags=re.IGNORECASE | re.DOTALL)
+    if boxed:
+        inside = boxed[-1].strip()
+        # remove common latex wrappers like \text{...}, \mathbf{...}, etc.
+        inside = re.sub(r"\\[a-zA-Z]+\s*\{([^}]*)\}", r"\1", inside).strip()
 
-    # 2) backup: 'final answer is 42', 'answer: $1,300%', etc.
+        num = _extract_last_number(inside)
+        if num is not None:
+            return num
+
+    # 3) backup: 'final answer is 42', 'answer: $1,300%', etc.
     anchored = re.findall(
         r"(?:final\s*)?(?:answer|ans\.?|correct\s*answer)"
         r"\s*(?:is|:|=)?\s*([-+]?\$?\d+(?:[.,]\d+)?%?)",
@@ -83,5 +95,4 @@ def extract_answer(text: str) -> str:
     if anchored:
         return _normalize_number_token(anchored[-1])
 
-    # 3) do NOT guess from random numbers in the whole text
     return "no_final_answer"

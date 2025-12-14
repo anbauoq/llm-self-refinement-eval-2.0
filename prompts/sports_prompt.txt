@@ -1,12 +1,10 @@
 Answer the following question by showing your full reasoning between <think> and </think>.
 Then, on a NEW line, write your final answer between <ans> and </ans>.
 
-CRITICAL FORMAT RULES:
-- Your output MUST have this structure, in this order:
+Important:
+Your output MUST have this structure, in this order:
   1) A reasoning section between <think> and </think>.
-  2) On the very next line, a single <ans> tag containing only 0 or 1.
-- The <ans>...</ans> line MUST be the LAST line of your entire output.
-- You MUST NOT write ANYTHING (no words, no explanations, no punctuation, no spaces, no newlines) after </ans>.
+  2) On the last line, inside <ans> </ans> the final answer which is either 0 or 1.
 
 Decision rule:
 - Answer 1 if the sentence is plausible in real-world sports context.
@@ -74,8 +72,5 @@ Malcolm Brogdon is a professional basketball player. “Banked the shot in” is
 ----
 Now, answer the following question.
 
-REMEMBER:
-- Your VERY LAST characters must be the closing tag: </ans>
-- Do NOT output anything after </ans>.
 
 Question: {question}
