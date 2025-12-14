@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List, Tuple
 
 def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -23,23 +23,23 @@ def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
         "answer": item["answer"],
     }
 
-
 def extract_answer(text: str) -> str:
     """
     Extract final MCQ letter (A–E) from model output.
 
-    Priority:
-      1) Last <ans>...</ans> OR <answer>...</answer> block (tolerant to whitespace + nesting)
-      2) Last \\boxed{...} (e.g., \\boxed{C}, \\boxed{\\text{C}}, \\boxed{(C)})
-      3) Anchored phrases like 'final answer is C'
-      4) Otherwise: 'no_final_answer'
+    Rule: return the answer candidate that appears LAST in the text,
+    across:
+      - <ans>...</ans> / <answer>...</answer>
+      - \\boxed{...}
+      - anchored phrases like "final answer is C"
     """
     if not text or not text.strip():
         return "no_final_answer"
 
     t = text.strip()
+    candidates: List[Tuple[int, str]] = []  # (position, letter)
 
-    def _pick_letter(blob: str):
+    def _pick_letter(blob: str) -> Optional[str]:
         if not blob:
             return None
         s = blob.strip()
@@ -48,56 +48,60 @@ def extract_answer(text: str) -> str:
         if m:
             return m.group(0).upper()
 
-        m = re.search(r"\b([A-E])\b", s, flags=re.IGNORECASE)
-        if m:
-            return m.group(1).upper()
+        # pick LAST standalone letter token (safer than first)
+        toks = re.findall(r"\b([A-E])\b", s, flags=re.IGNORECASE)
+        if toks:
+            return toks[-1].upper()
 
-        m = re.search(
-            r"[\(\[\{<\*\"']\s*([A-E])\s*[\)\]\}>\"\*']",
-            s,
-            flags=re.IGNORECASE,
-        )
-        if m:
-            return m.group(1).upper()
+        # pick LAST bracketed-ish letter
+        br = re.findall(r"[\(\[\{<\*\"']\s*([A-E])\s*[\)\]\}>\"\*']",
+                        s, flags=re.IGNORECASE)
+        if br:
+            return br[-1].upper()
 
         return None
 
-    # 1) <ans>...</ans> or <answer>...</answer> (take LAST)
-    tag_blocks = re.findall(
+    # 1) <ans>...</ans> or <answer>...</answer> (collect ALL)
+    for m in re.finditer(
         r"<\s*(ans|answer)\s*>(.*?)</\s*\1\s*>",
         t,
         flags=re.IGNORECASE | re.DOTALL,
-    )
-    if tag_blocks:
-        _, block = tag_blocks[-1]
-        block = block.strip()
+    ):
+        block = (m.group(2) or "").strip()
 
         # strip nested <ans>/<answer> tags inside
         clean = re.sub(r"</?\s*(?:ans|answer)\s*>", " ", block, flags=re.IGNORECASE).strip()
 
         letter = _pick_letter(clean)
         if letter:
-            return letter
+            candidates.append((m.start(), letter))
 
-    # 2) \\boxed{...} (take LAST)
-    boxed = re.findall(r"\\boxed\s*\{([^}]*)\}", t, flags=re.IGNORECASE | re.DOTALL)
-    if boxed:
-        inside = boxed[-1].strip()
-        # remove common latex wrappers like \text{C}, \mathbf{C}, etc.
-        inside = re.sub(r"\\[a-zA-Z]+\s*\{([^}]*)\}", r"\1", inside).strip()
+    # 2) \\boxed{...} (collect ALL)
+    for m in re.finditer(r"\\boxed\s*\{([^}]*)\}", t, flags=re.IGNORECASE | re.DOTALL):
+        inside = (m.group(1) or "").strip()
+
+        # unwrap common latex wrappers like \text{C}, \mathbf{C}, etc. (repeat to handle nesting)
+        while True:
+            new_inside = re.sub(r"\\[a-zA-Z]+\s*\{([^}]*)\}", r"\1", inside).strip()
+            if new_inside == inside:
+                break
+            inside = new_inside
 
         letter = _pick_letter(inside)
         if letter:
-            return letter
+            candidates.append((m.start(), letter))
 
-    # 3) Anchored phrases
-    anchored = re.findall(
+    # 3) Anchored phrases (collect ALL)
+    for m in re.finditer(
         r"(?:final\s*)?(?:answer|ans\.?|correct\s*answer)"
         r"\s*(?:is|:|=)?\s*[\*\(\[\{\"']*([A-E])",
         t,
         flags=re.IGNORECASE,
-    )
-    if anchored:
-        return anchored[-1].upper()
+    ):
+        candidates.append((m.start(1), m.group(1).upper()))
 
-    return "no_final_answer"
+    if not candidates:
+        return "no_final_answer"
+
+    candidates.sort(key=lambda x: x[0])
+    return candidates[-1][1]

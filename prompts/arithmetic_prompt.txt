@@ -2,7 +2,10 @@ Answer the following math word problem by showing your full reasoning between <t
 Then on a new line, write your final numeric answer between <ans> </ans>.
 
 Important:
-- Inside <ans> </ans> you must output ONLY the final numeric answer. No words, no units, no extra text.
+Your output MUST have this structure, in this order:
+  1) A reasoning section between <think> and </think>.
+  2) The final numeric answer inside <ans> </ans>. No words, no units, no extra text.
+
 
 Example 1:
 Question: Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?
@@ -46,14 +49,9 @@ Mark has 10 yellow flowers. There are 80% more purple than yellow, so purple flo
 </think>
 <ans>35</ans>
 
-Example 7:
-Question: Albert is wondering how much pizza he can eat in one day. He buys 2 large pizzas and 2 small pizzas. A large pizza has 16 slices and a small pizza has 8 slices. If he eats it all, how many pieces does he eat that day?
-<think>
-Albert buys 2 large pizzas with 16 slices each, so large slices = 2 × 16 = 32. He also buys 2 small pizzas with 8 slices each, so small slices = 2 × 8 = 16. Total slices he eats = 32 + 16 = 48.
-</think>
-<ans>48</ans>
-
 ----
-Now, answer the following question. State the final answer in the exact format: `<ans>number</ans>`.
+Now your turn to answer the question. 
 
 Question: {question}
+
+<think>

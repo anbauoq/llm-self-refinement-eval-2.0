@@ -4,9 +4,8 @@ Then on a new line, write your final answer choice between <ans> </ans>.
 Important:
 Your output MUST have this structure, in this order:
   1) A reasoning section between <think> and </think>.
-  2) 
-- The choices are always labeled A), B), C), D), E).
-- Inside <ans> </ans> you must output ONLY a single capital letter: A, B, C, D, or E. No extra text.
+  2) The final answer inside <ans> </ans>.
+Note: the choices are always labeled A), B), C), D), E). You must output only one letter as final answer. No extra text.
 
 Example 1:
 Question: A company produces 420 units of a particular computer component every month, at a production cost to the company of $110 per component, and sells all of the components by the end of each month. What is the minimum selling price per component that will guarantee that the yearly profit (revenue from sales minus production costs) will be at least $626,400 ?\n# Answer option: ['A)226', 'B)230', 'C)240', 'D)260', 'E)280']
@@ -16,9 +15,8 @@ They make 420 units per month for 12 months, so in a year they sell 420 × 12 = 
 <ans>C</ans>
 
 Example 2:
-Question: In how many ways can the letters of the word "BEATLES" be rearranged to make 7 letter words such that none of the letters repeat?\n# Answer option: ['A)7!', 'B)7!/2!', 'C)6!', 'D)5!', 'E)8!']
-<think>
-The word "BEATLES" has 7 letters in total, but the letter E appears twice, so there are only 6 distinct letters. We want 7-letter arrangements using all the letters, with no extra repetitions beyond what is already in the word. This is a permutation of a multiset with 7 positions where one letter (E) is repeated twice. The number of distinct arrangements is therefore 7! / 2!. This corresponds to option B.
+Question: In how many ways can the letters of the word \"PROBLEC\" be rearranged to make 7 letter words such that none of the letters repeat?\n# Answer option: ['A)2!', 'B)3!', 'C)7!', 'D)8!', 'E)9!']
+“PROBLEC” has 7 letters and they are all distinct (P, R, O, B, L, E, C). To form a 7-letter word with no repeated letters, we must use all 7 letters exactly once. Number of rearrangements of 7 distinct letters is \(7!\). This matches option C.
 </think>
 <ans>B</ans>
 
@@ -51,6 +49,8 @@ First apply the 10% discount to $200: 10% of 200 is 20, so the discounted price 
 <ans>C</ans>
 
 ----
-Now, answer the following question. State the final answer in the exact format: `<ans>Letter</ans>`.
+Now your turn to answer the question.
 
 Question: {question}
+
+<think>

@@ -21,7 +21,7 @@ def contains_bad_phrases(hint: str, answer: str, dataset_name: str) -> bool:
         return False
 
     h = (hint or "").lower()
-    a = (answer or "").strip().lower()
+    a = answer
 
     # Generic "this is the answer" phrases (bad everywhere, even without seeing `a`)
     generic_triggers = (
@@ -65,11 +65,10 @@ def contains_bad_phrases(hint: str, answer: str, dataset_name: str) -> bool:
             rf"final answer[^.\n]*\b{re.escape(a)}\b",
             rf"the answer is[^.\n]*\b{re.escape(a)}\b",
             rf"correct answer[^.\n]*\b{re.escape(a)}\b",
-            rf"answer\s*(is|=)\s*\b{re.escape(a)}\b",
             rf"option\s+\b{re.escape(a)}\b",
             rf"choice\s+\b{re.escape(a)}\b",
             rf"letter\s+\b{re.escape(a)}\b",
-            rf"\(\s*{re.escape(a)}\s*\)",  # e.g. "(A)"
+            rf"\(\s*{re.escape(a)}\s*\)",
         ]
         for pat in short_patterns:
             if re.search(pat, h):
@@ -97,15 +96,12 @@ def contains_bad_phrases(hint: str, answer: str, dataset_name: str) -> bool:
 def is_valid_hint(hint: str, correct_answer: str, dataset_name: str) -> bool:
     return not contains_bad_phrases(hint, correct_answer, dataset_name)
 
-    
-import re
 
 def strip_answer_from_hint(hint: str, answer: str) -> str:
     """
     Replace direct mentions of the correct answer in the hint with '<MSK>'.
 
     - Masks common "answer is X" patterns by replacing X with <MSK>
-    - Masks standalone occurrences of the answer token as a whole word/number
     """
     if not hint or not answer:
         return hint
@@ -129,11 +125,6 @@ def strip_answer_from_hint(hint: str, answer: str) -> str:
     token_pattern = r"\b" + re.escape(a) + r"\b"
     h = re.sub(token_pattern, msk, h, flags=re.IGNORECASE)
 
-    # 3) Optional: avoid repeated masks like "<MSK> <MSK>"
-    h = re.sub(rf"(?:{re.escape(msk)}\s*){{2,}}", f"{msk} ", h).strip()
-
-    # 4) Collapse extra whitespace
-    h = " ".join(h.split())
     return h
 
 

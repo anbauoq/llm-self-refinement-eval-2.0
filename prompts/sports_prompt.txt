@@ -6,6 +6,8 @@ Your output MUST have this structure, in this order:
   1) A reasoning section between <think> and </think>.
   2) On the last line, inside <ans> </ans> the final answer which is either 0 or 1.
 
+Your last line must always be the final answer.
+
 Decision rule:
 - Answer 1 if the sentence is plausible in real-world sports context.
 - Answer 0 if the sentence is not plausible in real-world sports context.
@@ -54,23 +56,10 @@ Sam Darnold is a professional American football quarterback. “Passed the puck�
 </think>
 <ans>0</ans>
 
-Example 7:
-Question: Is the following sentence plausible? Draymond Green threw a touchdown
-<think>
-Draymond Green is a professional basketball player. “Threw a touchdown” is an American football phrase, where a quarterback throws a pass for a touchdown. Basketball players do not “throw touchdowns” in their sport. So this sentence is not plausible.
-</think>
-<ans>0</ans>
-
-Example 8:
-Question: Is the following sentence plausible? Malcolm Brogdon banked the shot in
-<think>
-Malcolm Brogdon is a professional basketball player. “Banked the shot in” is a common basketball phrase meaning the ball hit the backboard and went into the hoop. This is a normal kind of play in basketball. So this sentence is plausible.
-</think>
-<ans>1</ans>
-
 
 ----
-Now, answer the following question.
-
+Now your turn to answer the question. 
 
 Question: {question}
+
+<think>

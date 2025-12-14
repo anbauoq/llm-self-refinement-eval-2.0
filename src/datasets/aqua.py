@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Any
+from typing import Optional, Tuple, List, Dict, Any
 
 def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
 
@@ -11,89 +11,81 @@ def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
 
 def extract_answer(text: str) -> str:
     """
-    Extract final MCQ letter (A–E) from model output for AQuA-style prompts.
+    Extract final MCQ letter (A–E) from model output.
 
-    Priority:
-      1) Last <ans>...</ans> OR <answer>...</answer> block (primary), tolerant to:
-         - whitespace in tags: < ans >, < answer >
-         - nested tags: <ans><ans>E</ans></ans>
-      2) Last \\boxed{...} (e.g., \\boxed{C}, \\boxed{\\text{C}}, \\boxed{(C)})
-      3) Anchored phrases like 'final answer is C'
-      4) Otherwise: 'no_final_answer'
+    Rule: return the answer candidate that appears LAST in the text,
+    across these formats:
+      - <ans>...</ans> or <answer>...</answer>
+      - \\boxed{...}
+      - anchored phrases like "final answer is C"
     """
     if not text or not text.strip():
         return "no_final_answer"
 
     t = text.strip()
+    candidates: List[Tuple[int, str]] = []  # (position_in_text, letter)
 
-    # Helper: from a blob, try to pick a single A–E
-    def _pick_letter(blob: str) -> str | None:
+    def _pick_last_letter(blob: str) -> Optional[str]:
         if not blob:
             return None
         s = blob.strip()
 
-        # exact single letter
+        # 1) exact single letter
         m = re.fullmatch(r"[A-E]", s, flags=re.IGNORECASE)
         if m:
             return m.group(0).upper()
 
-        # contains a standalone letter token
-        m = re.search(r"\b([A-E])\b", s, flags=re.IGNORECASE)
-        if m:
-            return m.group(1).upper()
+        # 2) last standalone letter token
+        toks = re.findall(r"\b([A-E])\b", s, flags=re.IGNORECASE)
+        if toks:
+            return toks[-1].upper()
 
-        # contains something like "(C)" or "[C]" or "*C*"
-        m = re.search(r"[\(\[\{<\*\"']\s*([A-E])\s*[\)\]\}>\"\*']", s, flags=re.IGNORECASE)
-        if m:
-            return m.group(1).upper()
+        # 3) last bracketed-ish letter like "(C)" "[C]" "{C}" "<C>" "*C*" '"C"'
+        br = re.findall(r"[\(\[\{<\*\"']\s*([A-E])\s*[\)\]\}>\"\*']",
+                        s, flags=re.IGNORECASE)
+        if br:
+            return br[-1].upper()
 
         return None
 
-    # 1) Prefer explicit tags: <ans> or <answer> (take the LAST block found)
-    tag_blocks = re.findall(
-        r"<\s*(ans|answer)\s*>(.*?)</\s*\1\s*>",
-        t,
-        flags=re.IGNORECASE | re.DOTALL,
-    )
-    if tag_blocks:
-        _tag, candidate_block = tag_blocks[-1]
-        candidate_block = candidate_block.strip()
+    # A) <ans>/<answer> blocks (record each, take last overall later)
+    for m in re.finditer(r"<\s*(ans|answer)\s*>(.*?)</\s*\1\s*>",
+                         t, flags=re.IGNORECASE | re.DOTALL):
+        block = (m.group(2) or "").strip()
 
-        # strip any nested <ans>/<answer> tags inside
-        candidate_clean = re.sub(
-            r"</?\s*(?:ans|answer)\s*>",
-            " ",
-            candidate_block,
-            flags=re.IGNORECASE,
-        ).strip()
+        # strip nested <ans>/<answer> tags inside
+        block = re.sub(r"</?\s*(?:ans|answer)\s*>", " ", block, flags=re.IGNORECASE).strip()
 
-        letter = _pick_letter(candidate_clean)
+        letter = _pick_last_letter(block)
         if letter:
-            return letter
+            candidates.append((m.start(), letter))
 
-    # 2) LaTeX \\boxed{...} (take the LAST one)
-    boxed = re.findall(
-        r"\\boxed\s*\{([^}]*)\}",
-        t,
-        flags=re.IGNORECASE | re.DOTALL,
-    )
-    if boxed:
-        inside = boxed[-1].strip()
+    # B) \boxed{...}
+    for m in re.finditer(r"\\boxed\s*\{([^}]*)\}", t, flags=re.IGNORECASE | re.DOTALL):
+        inside = (m.group(1) or "").strip()
 
-        # remove common LaTeX wrappers like \text{C}, \mathbf{C}, etc.
-        inside = re.sub(r"\\[a-zA-Z]+\s*\{([^}]*)\}", r"\1", inside).strip()
-        letter = _pick_letter(inside)
+        # unwrap common LaTeX wrappers like \text{C}, \mathbf{C}, etc. (repeat to handle nesting)
+        while True:
+            new_inside = re.sub(r"\\[a-zA-Z]+\s*\{([^}]*)\}", r"\1", inside).strip()
+            if new_inside == inside:
+                break
+            inside = new_inside
+
+        letter = _pick_last_letter(inside)
         if letter:
-            return letter
+            candidates.append((m.start(), letter))
 
-    # 3) Strong anchored patterns (fallback)
-    anchored = re.findall(
-        r"(?:final\s*)?(?:answer|ans\.?|correct\s*answer)"
-        r"\s*(?:is|:|=)?\s*[\*\(\[\{\"']*([A-E])",
+    # C) anchored phrases
+    for m in re.finditer(
+        r"(?:final\s*)?(?:answer|ans\.?|correct\s*answer)\s*(?:is|:|=)?\s*[\*\(\[\{\"']*([A-E])",
         t,
         flags=re.IGNORECASE,
-    )
-    if anchored:
-        return anchored[-1].upper()
+    ):
+        candidates.append((m.start(1), m.group(1).upper()))
 
-    return "no_final_answer"
+    if not candidates:
+        return "no_final_answer"
+
+    # return the candidate that appears last in the output
+    candidates.sort(key=lambda x: x[0])
+    return candidates[-1][1]

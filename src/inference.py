@@ -6,7 +6,7 @@ import logging
 from tqdm import tqdm
 from typing import Any, Dict, Iterable, List, Optional
 from prompts import format_initial_prompt, format_post_hint_prompt, format_hint_prompt
-from hints import    extract_hint_text, is_valid_hint, strip_answer_from_hint
+from hints import extract_hint_text, is_valid_hint, strip_answer_from_hint
 from utils import ( 
     extract_cot,
     exact_match,
@@ -259,8 +259,8 @@ def generate_hints(
             for item in batch:
                 prompt = format_hint_prompt(
                     item["question"],
-                    item.get("predicted_answer", ""),
-                    item.get("chain_of_thought", ""),
+                    item.get("predicted_answer"),
+                    item.get("chain_of_thought"),
                     item["ground_truth"],
                     dataset_name=dataset_name
                 )
@@ -335,7 +335,7 @@ def generate_hints(
             for idx, res in enumerate(batch_hints):
                 if res is None:
                     item_with_hint = batch[idx].copy()
-                    raw = last_decoded.get(idx, "")
+                    raw = last_decoded.get(idx)
                     hint_text = extract_hint_text(raw)
 
                     if hint_text:
@@ -345,9 +345,6 @@ def generate_hints(
                                 hint_text,
                                 item_with_hint["ground_truth"],
                             )
-                            # If it somehow still leaks, drop it
-                            if not is_valid_hint(hint_text, item_with_hint["ground_truth"], dataset_name):
-                                hint_text = ""
 
                     item_with_hint["hint_sentence"] = hint_text
                     batch_hints[idx] = item_with_hint

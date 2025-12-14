@@ -45,8 +45,6 @@ def answers_reformatting(text: str) -> str:
         flags=re.IGNORECASE | re.DOTALL,
     )
 
-    text = text.rstrip() + "<think>\n"
-
     return pattern.sub(lambda m: rf"\boxed{{{m.group(1).strip()}}}", text)
 
 
@@ -70,9 +68,6 @@ def format_initial_prompt(
     template = prompt_path.read_text(encoding="utf-8")
     body = template.format(question=question.strip())
 
-    if model in ("Qwen/Qwen2.5-Math-1.5B", "Qwen/Qwen2.5-Math-7B"):
-        return body
-
     if model in ("microsoft/Phi-4-mini-instruct", "microsoft/Phi-4-mini-reasoning"):
         return phi4_prompt_formatting(body)
 
@@ -86,6 +81,8 @@ def format_initial_prompt(
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
         "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
         "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "Qwen/Qwen2.5-Math-1.5B",
+        "Qwen/Qwen2.5-Math-7B"
     ):
         return answers_reformatting(body)
 
@@ -95,7 +92,7 @@ def format_initial_prompt(
 def format_post_hint_prompt(
     question: str,
     model: str,
-    hint: str = "",
+    hint: str,
     dataset_name: str = "gsm8k",
 ) -> str:
     """
@@ -117,8 +114,6 @@ def format_post_hint_prompt(
     combined = f"{hint.strip()}\n\n{body}"
 
     # --- model-specific formatting ---
-    if model in ("Qwen/Qwen2.5-Math-1.5B", "Qwen/Qwen2.5-Math-7B"):
-        return combined
 
     if model in ("microsoft/Phi-4-mini-instruct", "microsoft/Phi-4-mini-reasoning"):
         return phi4_prompt_formatting(combined)
@@ -133,6 +128,8 @@ def format_post_hint_prompt(
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
         "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
         "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "Qwen/Qwen2.5-Math-1.5B",
+        "Qwen/Qwen2.5-Math-7B"
     ):
         return answers_reformatting(combined)
 
@@ -150,7 +147,7 @@ def format_hint_prompt(
     Load and format the *dataset-specific* hint-generation prompt.
     asdiv and gsm8k share the same arithmetic hint prompt file.
     """
-    dataset_key = (dataset_name or "").strip().lower()
+    dataset_key = dataset_name.strip().lower()
 
     hint_prompt_map = {
         "asdiv": "prompts/hint_prompt_arithmetic.txt",

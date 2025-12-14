@@ -4,10 +4,6 @@
 source ~/miniforge3/etc/profile.d/conda.sh
 conda activate self_play
 
-# Use optimized inference by default (can override with USE_OPTIMIZED=false)
-USE_OPTIMIZED="${USE_OPTIMIZED:-true}"
-echo "Inference mode: $([ "$USE_OPTIMIZED" = "true" ] && echo "OPTIMIZED" || echo "STANDARD")"
-
 MODELS_NON_REASONING=(
   "Qwen/Qwen2.5-Math-1.5B"
   "Qwen/Qwen2.5-Math-7B"
@@ -24,22 +20,26 @@ MODELS_REASONING=(
 )
 
 DATASETS=( "ar_lsat" "asdiv" "aqua" "gsm8k" "sports" )
-
 TOKENS=(1024 2048)
+
 INPUT_DIR="data"
 OUTPUT_DIR="results/all_results"
+
+RUNNER="run.py"   # change to "src/run.py" if that's where it is
+BATCH_SIZE=16     # delete this + --batch_size if run.py doesn't support it
 
 # Non-reasoning
 for model in "${MODELS_NON_REASONING[@]}"; do
   for dataset in "${DATASETS[@]}"; do
     for t in "${TOKENS[@]}"; do
       echo "Running $model on $dataset with max_tokens=$t"
-      python src/run.py \
+      python "$RUNNER" \
         --model_path "$model" \
         --dataset "$dataset" \
         --input_path "$INPUT_DIR/${dataset}.jsonl" \
         --output_dir "$OUTPUT_DIR/$(basename "$model")/$dataset/max${t}" \
-        --max_tokens "$t"
+        --max_tokens "$t" \
+        --batch_size "$BATCH_SIZE"
     done
   done
 done
@@ -49,32 +49,13 @@ for model in "${MODELS_REASONING[@]}"; do
   for dataset in "${DATASETS[@]}"; do
     for t in "${TOKENS[@]}"; do
       echo "Running $model on $dataset with max_tokens=$t"
-      
-      if [ "$USE_OPTIMIZED" = "true" ]; then
-        # Auto-adjust batch size
-        if [[ "$model" =~ "1.5B"|"2B" ]]; then
-          BATCH_SIZE=32
-        elif [[ "$model" =~ "7B"|"8B" ]]; then
-          BATCH_SIZE=16
-        else
-          BATCH_SIZE=8
-        fi
-        
-        python src/run_optimized.py \
-          --model_path "$model" \
-          --dataset "$dataset" \
-          --input_path "$INPUT_DIR/${dataset}.jsonl" \
-          --output_dir "$OUTPUT_DIR/$(basename "$model")/$dataset/max${t}" \
-          --max_tokens "$t" \
-          --batch_size "$BATCH_SIZE"
-      else
-        python src/run.py \
-          --model_path "$model" \
-          --dataset "$dataset" \
-          --input_path "$INPUT_DIR/${dataset}.jsonl" \
-          --output_dir "$OUTPUT_DIR/$(basename "$model")/$dataset/max${t}" \
-          --max_tokens "$t"
-      fi
+      python "$RUNNER" \
+        --model_path "$model" \
+        --dataset "$dataset" \
+        --input_path "$INPUT_DIR/${dataset}.jsonl" \
+        --output_dir "$OUTPUT_DIR/$(basename "$model")/$dataset/max${t}" \
+        --max_tokens "$t" \
+        --batch_size "$BATCH_SIZE"
     done
   done
 done
