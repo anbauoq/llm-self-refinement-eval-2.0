@@ -22,6 +22,15 @@ def llama_prompt_formatting(prompt: str) -> str:
         "<|eot_id|>"
         "<|start_header_id|>assistant<|end_header_id|>\n\n"
     )
+    
+def distill_prompt_formatting(prompt_body: str) -> str:
+    return (
+        "<｜begin▁of▁sentence｜>"
+        "<｜User｜>"
+        f"{prompt_body}"
+        "<｜Assistant｜>"
+        "<think>\n"
+    )
 
 def answers_reformatting(text: str) -> str:
 
@@ -56,13 +65,11 @@ def format_initial_prompt(
     """
     Load and format the dataset-specific answer prompt.
     """
-
     prompt_file_map = {
         "asdiv": "arithmetic_prompt.txt",
         "gsm8k": "arithmetic_prompt.txt",
     }
     prompt_filename = prompt_file_map.get(dataset_name, f"{dataset_name}_prompt.txt")
-
     prompt_path = Path("prompts") / prompt_filename
 
     template = prompt_path.read_text(encoding="utf-8")
@@ -77,12 +84,19 @@ def format_initial_prompt(
     if model == "meta-llama/Meta-Llama-3.1-8B-Instruct":
         return llama_prompt_formatting(body)
 
+    # ---- Distill chat models: reformat answers + apply distill chat wrapper ----
     if model in (
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
         "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
         "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+    ):
+        prompt_body = answers_reformatting(body)
+        return distill_prompt_formatting(prompt_body)
+
+    # ---- Base Qwen math: just reformat answers (no chat wrapper) ----
+    if model in (
         "Qwen/Qwen2.5-Math-1.5B",
-        "Qwen/Qwen2.5-Math-7B"
+        "Qwen/Qwen2.5-Math-7B",
     ):
         return answers_reformatting(body)
 
