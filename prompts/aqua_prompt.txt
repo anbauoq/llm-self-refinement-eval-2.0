@@ -9,43 +9,32 @@ Note: the choices are always labeled A, B, C, D, E. You must output only one let
 
 Example 1:
 Question: A company produces 420 units of a particular computer component every month, at a production cost to the company of $110 per component, and sells all of the components by the end of each month. What is the minimum selling price per component that will guarantee that the yearly profit (revenue from sales minus production costs) will be at least $626,400 ?\n# Answer option: ['A)226', 'B)230', 'C)240', 'D)260', 'E)280']
-<think>
-They make 420 units per month for 12 months, so in a year they sell 420 × 12 = 5040 components. Production cost per unit is 110, so total yearly cost is 5040 × 110 = 554400. Let p be the selling price per component. Yearly revenue is 5040p, so profit is 5040p − 554400. We need 5040p − 554400 ≥ 626400, so 5040p ≥ 1180800 and p ≥ 1180800 ÷ 5040 ≈ 234.3. The smallest answer choice at least this large is 240 which is option C.
-</think>
+<think> They make 420 units per month for 12 months, so in a year they sell 420 × 12 = 5040 components. Production cost per unit is 110, so total yearly cost is 5040 × 110 = 554400. Let p be the selling price per component. Yearly revenue is 5040p, so profit is 5040p − 554400. We need 5040p − 554400 ≥ 626400, so 5040p ≥ 1180800 and p ≥ 1180800 ÷ 5040 ≈ 234.3. The smallest answer choice at least this large is 240 which is option C.</think>
 <ans>C</ans>
 
 Example 2:
-Question: In how many ways can the letters of the word \"PROBLEC\" be rearranged to make 7 letter words such that none of the letters repeat?\n# Answer option: ['A)2!', 'B)3!', 'C)7!', 'D)8!', 'E)9!']
-“PROBLEC” has 7 letters and they are all distinct (P, R, O, B, L, E, C). To form a 7-letter word with no repeated letters, we must use all 7 letters exactly once. Number of rearrangements of 7 distinct letters is \(7!\). This matches option C.
-</think>
+Question: In how many ways can the letters of the word \"PROBLEC\" be rearranged to make 7 letter words such that none of the letters repeat?\n# <think> Answer option: ['A)2!', 'B)3!', 'C)7!', 'D)8!', 'E)9!']
+“PROBLEC” has 7 letters and they are all distinct (P, R, O, B, L, E, C). To form a 7-letter word with no repeated letters, we must use all 7 letters exactly once. Number of rearrangements of 7 distinct letters is \(7!\). This matches option C.</think>
 <ans>B</ans>
 
 Example 3:
 Question: An exam is given in a certain class. The average (arithmetic mean) of the highest score and the lowest score is equal to x. If the average score for the entire class is equal to y and there are z students in the class, where z > 5, then in terms of x, y, and z, what is the average score for the class excluding the highest and lowest scorers?\n# Answer option: ['A)(zy – 2x)/z', 'B)(zy – 2)/z', 'C)(zx – y)/(z – 2)', 'D)(zy – 2x)/(z -2)', 'E)(zy – x)/(z + 2)']
-<think>
-Let the highest score be H and the lowest be L. We are told (H + L)/2 = x, so H + L = 2x. The total sum of all z scores is zy, so the sum of the remaining z − 2 scores is zy − (H + L) = zy − 2x. The average excluding the highest and lowest is therefore (zy − 2x)/(z − 2). This matches option D.
-</think>
+<think> Let the highest score be H and the lowest be L. We are told (H + L)/2 = x, so H + L = 2x. The total sum of all z scores is zy, so the sum of the remaining z − 2 scores is zy − (H + L) = zy − 2x. The average excluding the highest and lowest is therefore (zy − 2x)/(z − 2). This matches option D.</think>
 <ans>D</ans>
 
 Example 4:
 Question: Find the total no. of distinct bike no.'s that can beformed using 2 letters followed by 2 no.'s. How many letters need to be distinct?\n# Answer option: ['A)65000', 'B)64543', 'C)74325', 'D)74453', 'E)97656']
-<think>
-We want a pattern: Letter, Letter, Digit, Digit. Assume the two letters must be different from each other, and the digits can repeat. For the first letter, there are 26 choices. For the second letter, there are 25 choices, because it must be different from the first letter. For each digit position, there are 10 choices (0 to 9). Total number of plates: 26 * 25 * 10 * 10 = 26 * 25 * 100 = 65000. So the correct answer is 65000, which is option A.
-</think>
+<think> We want a pattern: Letter, Letter, Digit, Digit. Assume the two letters must be different from each other, and the digits can repeat. For the first letter, there are 26 choices. For the second letter, there are 25 choices, because it must be different from the first letter. For each digit position, there are 10 choices (0 to 9). Total number of plates: 26 * 25 * 10 * 10 = 26 * 25 * 100 = 65000. So the correct answer is 65000, which is option A.</think>
 <ans>A</ans>
 
 Example 5:
 Question: A wire in the shape of rectangle of length 27 cm and breadth 17 cm is rebent to form a square. What will be the measure of each side?\n# Answer option: ['A)9', 'B)11', 'C)31', 'D)25', 'E)22']
-<think>
-First find the perimeter of the rectangle: 2 × (27 + 17) = 2 × 44 = 88 cm. When the wire is bent into a square, the perimeter stays 88 cm, so each side of the square is 88 ÷ 4 = 22 cm, which is option E.
-</think>
+<think> First find the perimeter of the rectangle: 2 × (27 + 17) = 2 × 44 = 88 cm. When the wire is bent into a square, the perimeter stays 88 cm, so each side of the square is 88 ÷ 4 = 22 cm, which is option E.</think>
 <ans>E</ans>
 
 Example 6:
 Question: A phone has a marked price of $200. It is sold with a 10% discount on the marked price and then a 5% sales tax is applied on the discounted price. What is the final price the customer pays?\n# Answer option: ['A)180', 'B)185', 'C)189', 'D)190', 'E)195']
-<think>
-First apply the 10% discount to $200: 10% of 200 is 20, so the discounted price is 200 − 20 = 180. Then apply 5% tax on 180: 5% of 180 is 0.05 × 180 = 9, so the final price is 180 + 9 = 189. This matches option C.
-</think>
+<think> First apply the 10% discount to $200: 10% of 200 is 20, so the discounted price is 200 − 20 = 180. Then apply 5% tax on 180: 5% of 180 is 0.05 × 180 = 9, so the final price is 180 + 9 = 189. This matches option C.</think>
 <ans>C</ans>
 
 ----
