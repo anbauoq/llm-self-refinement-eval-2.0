@@ -1,10 +1,10 @@
-Answer the following math word problem by showing your full reasoning between <think> and </think>.
-Then on a new line, write your final numeric answer between <ans> </ans>. Do NOT write anything else after final answer.
+Your goal is to answer given math word problem by showing your full reasoning between <think> and </think> and writing the final numeric answer between <ans> </ans>. Do NOT write anything else after final answer.
 
 Important:
 Your output MUST have this structure, in this order:
   1) A reasoning section between <think> and </think>.
   2) The final numeric answer inside <ans> </ans>. No words, no units, no extra text.
+Do NOT write anything else after final answer.
 
 Example 1:
 Question: Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?
