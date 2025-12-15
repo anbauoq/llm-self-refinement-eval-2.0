@@ -1,5 +1,4 @@
-Answer the following question by showing your full reasoning between <think> and </think>.
-Then, on a NEW line, write your final answer between <ans> and </ans>. Do NOT write anything else after final answer.
+Your goal is to answer given plausibility question by showing full reasoning between <think> and </think> and writing final answer choice between <ans> </ans>.
 
 Important:
 Your output MUST have this structure, in this order:
@@ -9,6 +8,8 @@ Your output MUST have this structure, in this order:
 Decision rule:
 - Answer 1 if the sentence is plausible in real-world sports context.
 - Answer 0 if the sentence is not plausible in real-world sports context.
+
+The following are examples of correctly formatted outputs:
 
 Example 1:
 Question: Is the following sentence plausible? Kyle Palmieri was called for slashing
@@ -44,6 +45,6 @@ Question: Is the following sentence plausible? Sam Darnold passed the puck
 
 
 ----
-Now answer this single question. Strictly follow the output requirements. Do NOT output anything else.
+Now answer this single question. Strictly follow the output requirements. Do NOT output anything else after stating the final answer to this question.
 
 Question: {question}
