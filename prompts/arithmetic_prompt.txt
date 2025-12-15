@@ -6,50 +6,37 @@ Your output MUST have this structure, in this order:
   1) A reasoning section between <think> and </think>.
   2) The final numeric answer inside <ans> </ans>. No words, no units, no extra text.
 
-
 Example 1:
 Question: Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?
-<think>
-She sold 48 clips in April. In May she sold half as many, which is 48 ÷ 2 = 24 clips. Altogether she sold 48 + 24 = 72 clips
-</think>
+<think> She sold 48 clips in April. In May she sold half as many, which is 48 ÷ 2 = 24 clips. Altogether she sold 48 + 24 = 72 clips</think>
 <ans>72</ans>
 
 Example 2:
 Question: Weng earns $12 an hour for babysitting. Yesterday, she just did 50 minutes of babysitting. How much did she earn?
-<think>
-Weng earns $12 for 60 minutes of work. She worked 50 minutes, which is 50/60 of an hour. Her earnings are 12 × (50/60) = 12 × (5/6) = 10. So she earned $10.
-</think>
+<think> Weng earns $12 for 60 minutes of work. She worked 50 minutes, which is 50/60 of an hour. Her earnings are 12 × (50/60) = 12 × (5/6) = 10. So she earned $10.</think>
 <ans>10</ans>
 
 Example 3:
 Question: Betty is saving money for a new wallet which costs $100. Betty has only half of the money she needs. Her parents decided to give her $15 for that purpose, and her grandparents twice as much as her parents. How much more money does Betty need to buy the wallet?
-<think>
-Wallet costs $100, and Betty already has half of that, so she has $50. Her parents give her $15, and her grandparents give twice that, which is 2 × 15 = $30. So in total she has 50 + 15 + 30 = $95. She still needs 100 − 95 = $5 to buy the wallet.
-</think>
+<think> Wallet costs $100, and Betty already has half of that, so she has $50. Her parents give her $15, and her grandparents give twice that, which is 2 × 15 = $30. So in total she has 50 + 15 + 30 = $95. She still needs 100 − 95 = $5 to buy the wallet.</think>
 <ans>5</ans>
 
 Example 4:
 Question: Julie is reading a 120-page book. Yesterday, she was able to read 12 pages and today, she read twice as many pages as yesterday. If she wants to read half of the remaining pages tomorrow, how many pages should she read?
-<think>
-Julie’s book has 120 pages. She read 12 pages yesterday and twice that today, which is 2 × 12 = 24 pages today. So far she has read 12 + 24 = 36 pages. The remaining pages are 120 − 36 = 84. She wants to read half of the remaining pages tomorrow, so she should read 84 ÷ 2 = 42 pages.
-</think>
+<think> Julie’s book has 120 pages. She read 12 pages yesterday and twice that today, which is 2 × 12 = 24 pages today. So far she has read 12 + 24 = 36 pages. The remaining pages are 120 − 36 = 84. She wants to read half of the remaining pages tomorrow, so she should read 84 ÷ 2 = 42 pages.</think>
 <ans>42</ans>
 
 Example 5:
 Question: James writes a 3-page letter to 2 different friends twice a week. How many pages does he write a year?
-<think>
-Each letter is 3 pages. He writes to 2 different friends, so each time he writes 3 × 2 = 6 pages. He does this twice a week, so per week he writes 6 × 2 = 12 pages. Over a 52-week year, he writes 12 × 52 = 624 pages in total.
-</think>
+<think> Each letter is 3 pages. He writes to 2 different friends, so each time he writes 3 × 2 = 6 pages. He does this twice a week, so per week he writes 6 × 2 = 12 pages. Over a 52-week year, he writes 12 × 52 = 624 pages in total.</think>
 <ans>624</ans>
 
 Example 6:
 Question: Mark has a garden with flowers. He planted plants of three different colors in it. Ten of them are yellow, and there are 80% more of those in purple. There are only 25% as many green flowers as there are yellow and purple flowers. How many flowers does Mark have in his garden?
-<think>
-Mark has 10 yellow flowers. There are 80% more purple than yellow, so purple flowers = 10 × 1.8 = 18. Together yellow and purple are 10 + 18 = 28. Green flowers are 25% of (yellow + purple), so green = 0.25 × 28 = 7. In total he has 10 + 18 + 7 = 35 flowers.
-</think>
+<think> Mark has 10 yellow flowers. There are 80% more purple than yellow, so purple flowers = 10 × 1.8 = 18. Together yellow and purple are 10 + 18 = 28. Green flowers are 25% of (yellow + purple), so green = 0.25 × 28 = 7. In total he has 10 + 18 + 7 = 35 flowers.</think>
 <ans>35</ans>
 
 ----
-Now your turn to answer the question. Strictly follow the output requirements.
+Now answer this question. Strictly follow the output requirements.
 
 Question: {question}
