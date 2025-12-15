@@ -1,9 +1,9 @@
-Your goal is to answer one given multiple-choice question by showing full reasoning between <think> and </think> and writing the final answer choice between <ans> </ans>. Do NOT write anything else after final answer to the given question.
+Your goal is to answer to the given multiple-choice question by showing full reasoning between <think> and </think> and writing the final answer choice between <ans> </ans>.
 
 Your output MUST have this structure, in this order:
   1) A reasoning section between <think> and </think>.
   2) The final answer inside <ans> </ans>. 
-Note: the choices are always labeled A, B, C, D, E. You must output only one of those letters as final answer.
+Note: the choices are always labeled A, B, C, D, E. You must output only one of those letters as final answer. Do NOT write anything else after stating final answer.
 
 The following are examples of correctly formatted outputs:
 
@@ -38,6 +38,6 @@ Question: A phone has a marked price of $200. It is sold with a 10% discount on 
 <ans>C</ans>
 
 ----
-Now answer this single question. Strictly follow the output requirements. Do NOT output anything else.
+Now answer this single question. Strictly follow the output requirements. Do NOT output anything else after stating the final answer to this question.
 
 Question: {question}
