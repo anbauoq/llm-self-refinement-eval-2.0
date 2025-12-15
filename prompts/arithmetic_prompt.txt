@@ -1,5 +1,5 @@
 Answer the following math word problem by showing your full reasoning between <think> and </think>.
-Then on a new line, write your final numeric answer between <ans> </ans>.
+Then on a new line, write your final numeric answer between <ans> </ans>. Do NOT write anything else after final answer.
 
 Important:
 Your output MUST have this structure, in this order:
@@ -53,5 +53,3 @@ Mark has 10 yellow flowers. There are 80% more purple than yellow, so purple flo
 Now your turn to answer the question. 
 
 Question: {question}
-
-<think>
