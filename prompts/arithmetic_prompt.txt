@@ -1,4 +1,4 @@
-Your goal is to answer given math word problem by showing your full reasoning between <think> and </think> and writing the final numeric answer between <ans> </ans>. Do NOT write anything else after final answer.
+Your goal is to answer given math word problem by showing your full reasoning between <think> and </think> and writing the final numeric answer between <ans> </ans>.
 
 Important:
 Your output MUST have this structure, in this order:
