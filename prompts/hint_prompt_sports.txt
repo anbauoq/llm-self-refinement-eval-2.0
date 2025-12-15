@@ -57,5 +57,3 @@ Question: {question}
 Your reasoning: {chain_of_thought}
 Your answer: {predicted_answer}
 Correct answer: {correct_answer}
-
-<hint>
