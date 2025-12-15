@@ -1,10 +1,10 @@
-Your goal is to answer given multiple-choice question by showing full reasoning between <think> and </think> and writing final answer choice between <ans> </ans>. Do NOT write anything else after stating final answer.
+Your goal is to answer given multiple-choice question by showing full reasoning between <think> and </think> and writing final answer choice between <ans> </ans>.
 
 Important:
 Your output MUST have this structure, in this order:
   1) A reasoning section between <think> and </think>.
   2) The final answer inside <ans> </ans>.
-Note: the choices are always labeled A, B, C, D, E. You must output only one of those letter as final answer. No other text.
+Note: the choices are always labeled A, B, C, D, E. You must output only one of those letter as final answer. Do NOT write anything else after stating the final answer.
 
 The following are examples of correctly formatted outputs:
 
@@ -93,6 +93,6 @@ E) G, H, J, K
 <ans>B</ans>
 
 ----
-Now answer this single question. Strictly follow the output requirements. Do NOT output anything else after stating the final answer.
+Now answer this single question. Strictly follow the output requirements. Do NOT output anything else after stating the final answer to this question.
 
 Question: {question}
