@@ -1,12 +1,10 @@
 Answer the following question by showing your full reasoning between <think> and </think>.
-Then, on a NEW line, write your final answer between <ans> and </ans>.
+Then, on a NEW line, write your final answer between <ans> and </ans>. Do NOT write anything else after final answer.
 
 Important:
 Your output MUST have this structure, in this order:
   1) A reasoning section between <think> and </think>.
   2) On the last line, inside <ans> </ans> the final answer which is either 0 or 1.
-
-Your last line must always be the final answer.
 
 Decision rule:
 - Answer 1 if the sentence is plausible in real-world sports context.
@@ -58,8 +56,6 @@ Sam Darnold is a professional American football quarterback. â€œPassed the puckâ
 
 
 ----
-Now your turn to answer the question. 
+Now your turn to answer the question. Strictly follow the output requirements.
 
 Question: {question}
-
-<think>
