@@ -6,6 +6,8 @@ Your output MUST have this structure, in this order:
   2) The final numeric answer inside <ans> </ans>. No words, no units, no extra text.
 Do NOT write anything else after final answer.
 
+The following are examples of correctly formatted outputs:
+
 Example 1:
 Question: Natalia sold clips to 48 of her friends in April, and then she sold half as many clips in May. How many clips did Natalia sell altogether in April and May?
 <think> She sold 48 clips in April. In May she sold half as many, which is 48 ÷ 2 = 24 clips. Altogether she sold 48 + 24 = 72 clips</think>
@@ -37,6 +39,6 @@ Question: Mark has a garden with flowers. He planted plants of three different c
 <ans>35</ans>
 
 ----
-Now answer this single question. Strictly follow the output requirements. Do NOT output anything else.
+Now your turn. Answer ONLY the next single Question. Do not output anything else.
 
 Question: {question}
