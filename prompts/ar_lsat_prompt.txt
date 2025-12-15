@@ -1,11 +1,11 @@
 Answer a multiple-choice question by showing your full reasoning between <think> and </think>. 
-Then on a new line, write your final answer choice between <ans> </ans>.
+Then on a new line, write your final answer choice between <ans> </ans>. Do NOT write anything else after final answer.
 
 Important:
 Your output MUST have this structure, in this order:
   1) A reasoning section between <think> and </think>.
   2) The final answer inside <ans> </ans>.
-Note: the choices are always labeled A, B, C, D, E. You must output only one letter as final answer. No extra text.
+Note: the choices are always labeled A, B, C, D, E. You must output only one of those letter as final answer. No other text.
 
 Example 1:
 Question: Five speakers—Alex, Blair, Casey, Devin, and Erin—will each give one talk at a one-day conference. The conference has five consecutive time slots, numbered 1 through 5, from earliest to latest. The following conditions apply:
@@ -104,8 +104,6 @@ Because K must be immediately to the right of H, they must appear as the pair H,
 <ans>B</ans>
 
 ----
-Now your turn to answer the question. 
+Now answer this question. Strictly follow the output requirements.
 
 Question: {question}
-
-<think>
