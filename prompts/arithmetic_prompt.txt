@@ -50,6 +50,6 @@ Mark has 10 yellow flowers. There are 80% more purple than yellow, so purple flo
 <ans>35</ans>
 
 ----
-Now your turn to answer the question. 
+Now your turn to answer the question. Strictly follow the output requirements.
 
 Question: {question}
