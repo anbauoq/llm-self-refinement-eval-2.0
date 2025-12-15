@@ -131,11 +131,19 @@ def solve_questions(
                     current_indices.append(idx)
 
                 # Pad unresolved inputs to tensor form
+                current_attention = [[1] * len(ids) for ids in current_input_ids]
+
                 padded = tokenizer.pad(
-                    {"input_ids": current_input_ids},
+                    {"input_ids": current_input_ids, "attention_mask": current_attention},
                     padding=True,
                     return_tensors="pt",
                 )
+
+                # Safety fallback: if some tokenizer still didn't return it, create it from padding
+                if "attention_mask" not in padded:
+                    pad_id = tokenizer.pad_token_id
+                    padded["attention_mask"] = (padded["input_ids"] != pad_id).long()
+
                 inputs = {k: v.to(model.device) for k, v in padded.items()}
 
                 # all rows have the same sequence length after padding
@@ -174,7 +182,13 @@ def solve_questions(
                     last_raw_outputs[global_idx] = trimmed_decoded
                                     
                     cot = extract_cot(trimmed_decoded)
-                    pred_answer = dataset_module.extract_answer(trimmed_decoded) or ""
+                    options = processed.get("options", item.get("options", []))
+
+                    if dataset_name == "aqua":
+                        pred_answer = dataset_module.extract_answer(trimmed_decoded, options=options) or ""
+                    else:
+                        pred_answer = dataset_module.extract_answer(trimmed_decoded) or ""
+
                                     
                     if (not pred_answer) or (pred_answer == "no_final_answer"):
                         continue

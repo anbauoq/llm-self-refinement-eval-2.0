@@ -107,7 +107,7 @@ def format_post_hint_prompt(
     question: str,
     model: str,
     hint: str,
-    dataset_name: str = "gsm8k",
+    dataset_name: str,
 ) -> str:
     """
     Load and format the dataset-specific answer prompt with a hint placed

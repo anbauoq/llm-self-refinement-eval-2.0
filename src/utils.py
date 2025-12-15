@@ -38,14 +38,14 @@ def save_data(data: Iterable[Mapping[str, Any]], path: str | Path) -> None:
             f.write(json.dumps(item, ensure_ascii=False, separators=(",", ":")) + "\n")
 
 
-
 def extract_cot(output: str) -> str:
     """
     Extract the last reasoning block.
 
     Priority:
-    1) <think> ... </think>
-    2) If only </think> exists (no <think>), take text before the last </think>
+    1) <think> ... </think>  OR  <thinking> ... </thinking>  (whichever appears last)
+    2) If only a closing tag exists (no matching opening), take text before the last closing
+       - handles </think> and </thinking>
     3) <cot_start> ... <cot_end>
     If none are present, return full output stripped.
     """
@@ -55,26 +55,36 @@ def extract_cot(output: str) -> str:
     text = output
     flags = re.DOTALL | re.IGNORECASE
 
-    # 1) <think> ... </think>
-    think_matches = re.findall(r"<think>(.*?)</think>", text, flags=flags)
-    if think_matches:
-        return think_matches[-1].strip()
+    # 1) Full blocks: choose whichever (think/thinking) appears last in the text
+    blocks = []
+    for tag in ("think", "thinking"):
+        for m in re.finditer(rf"<{tag}\b[^>]*>(.*?)</{tag}\b[^>]*>", text, flags=flags):
+            blocks.append((m.start(), m.group(1).strip()))
+    if blocks:
+        blocks.sort(key=lambda x: x[0])
+        return blocks[-1][1]
 
-    # 2) closing </think> without opening <think>
-    if not re.search(r"<think>", text, flags=re.IGNORECASE):
-        close_tags = list(re.finditer(r"</think>", text, flags=re.IGNORECASE))
+    # 2) closing tag without opening tag: </think>
+    if not re.search(r"<think\b", text, flags=re.IGNORECASE):
+        close_tags = list(re.finditer(r"</think\b[^>]*>", text, flags=re.IGNORECASE))
+        if close_tags:
+            end = close_tags[-1].start()
+            return text[:end].strip()
+
+    # 2b) closing tag without opening tag: </thinking>
+    if not re.search(r"<thinking\b", text, flags=re.IGNORECASE):
+        close_tags = list(re.finditer(r"</thinking\b[^>]*>", text, flags=re.IGNORECASE))
         if close_tags:
             end = close_tags[-1].start()
             return text[:end].strip()
 
     # 3) <cot_start> ... <cot_end>
-    cot_matches = re.findall(r"<cot_start>(.*?)<cot_end>", text, flags=flags)
+    cot_matches = re.findall(r"<cot_start\b[^>]*>(.*?)<cot_end\b[^>]*>", text, flags=flags)
     if cot_matches:
         return cot_matches[-1].strip()
 
     # 4) No tags – treat full output as reasoning
     return text.strip()
-
 
 
 # Evaluation helpers
