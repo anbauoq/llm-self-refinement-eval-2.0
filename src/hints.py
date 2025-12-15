@@ -127,32 +127,31 @@ def strip_answer_from_hint(hint: str, answer: str) -> str:
 
     return h
 
-
 def extract_hint_text(output: str) -> str:
     """
     Extract inner text from <hint>...</hint> or <hints>...</hints> blocks.
 
     - If such a block exists, return the inner text of the *last* one.
-    - Accepts both <hint> and <hints> (case-insensitive).
-    - Self-closing tags like <hints/> cannot contain inner text, so they are
-      effectively ignored; if only those are present, we fall back to the full
-      output stripped.
-    - If no such block exists, return the full decoded output stripped.
+    - Accepts both <hint> and <hints> (case-insensitive), multiline.
+    - If no paired block exists but a closing tag like </hint> or </hints> appears
+      (even without an opening tag), return everything *before* the first closing tag.
+    - If neither exists, return the full output stripped.
     """
 
-    # Match either <hint>...</hint> or <hints>...</hints>, any casing, multiline.
-    # `hint[s]?` allows `hint` or `hints` on both open and close tags.
+    # Proper paired tags
     matches = re.findall(
         r"<hint[s]?\b[^>]*>(.*?)</hint[s]?>",
         output,
         flags=re.DOTALL | re.IGNORECASE,
     )
+    if matches:
+        return matches[-1].strip()
 
-    if not matches:
-        # No paired <hint>/<hints> tags – fall back to using the whole output
-        # as the hint (even if there's a self-closing <hints/> somewhere).
-        return output.strip()
+    # Handle malformed case: missing opening tag but has a closing tag
+    m = re.search(r"</hint[s]?\s*>", output, flags=re.IGNORECASE)
+    if m:
+        return output[: m.start()].strip()
 
-    # Take the last block in case the model produced multiple
-    inner = matches[-1].strip()
-    return inner
+    # Fallback
+    return output.strip()
+
