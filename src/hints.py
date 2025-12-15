@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# hints.py
+
 from __future__ import annotations
 
 import re
