@@ -6,13 +6,13 @@ MODELS_NON_REASONING=(
   "meta-llama/Meta-Llama-3.1-8B-Instruct"
   "microsoft/Phi-4-mini-instruct"
   "Qwen/Qwen2.5-Math-1.5B"
-  "Qwen/Qwen2.5-Math-7B"
+  #"Qwen/Qwen2.5-Math-7B"
 )
 
 MODELS_REASONING=(
   "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
   "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
-  "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
+  #"deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
   "microsoft/Phi-4-mini-reasoning"
 )
 
@@ -26,7 +26,7 @@ OUTPUT_DIR_NONREASONING="results/sample_results/nonreasoning"
 MAX_SAMPLES=10
 BATCH_SIZE=2
 
-RUNNER="run.py"
+RUNNER="src/run.py"
 
 # Non-reasoning
 for model in "${MODELS_NON_REASONING[@]}"; do
