@@ -7,7 +7,7 @@ from pathlib import Path
 
 from inference import solve_questions
 from utils import load_data, save_data
-from runner_common import load_dataset_module, load_model_and_tokenizer
+from runner_utils import load_dataset_module, load_model_and_tokenizer
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
