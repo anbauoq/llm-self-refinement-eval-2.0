@@ -49,6 +49,6 @@ First apply the 10% discount to $200: 10% of 200 is 20, so the discounted price 
 <ans>C</ans>
 
 ----
-Now answer this question.
+Now answer this question. Strictly follow the output requirements.
 
 Question: {question}
