@@ -92,6 +92,6 @@ E) G, H, J, K
 <ans>B</ans>
 
 ----
-Now answer this question. Strictly follow the output requirements.
+Now answer this single question. Strictly follow the output requirements. Do NOT output anything else.
 
 Question: {question}
