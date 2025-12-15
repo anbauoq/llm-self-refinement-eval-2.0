@@ -44,6 +44,6 @@ Question: Is the following sentence plausible? Sam Darnold passed the puck
 
 
 ----
-Answer this question. Strictly follow the output requirements.
+Now answer this single question. Strictly follow the output requirements. Do NOT output anything else.
 
 Question: {question}
