@@ -5,7 +5,7 @@ Important:
 Your output MUST have this structure, in this order:
   1) A reasoning section between <think> and </think>.
   2) The final answer inside <ans> </ans>.
-Note: the choices are always labeled A), B), C), D), E). You must output only one letter as final answer. No extra text.
+Note: the choices are always labeled A, B, C, D, E. You must output only one letter as final answer. No extra text.
 
 Example 1:
 Question: A company produces 420 units of a particular computer component every month, at a production cost to the company of $110 per component, and sells all of the components by the end of each month. What is the minimum selling price per component that will guarantee that the yearly profit (revenue from sales minus production costs) will be at least $626,400 ?\n# Answer option: ['A)226', 'B)230', 'C)240', 'D)260', 'E)280']
