@@ -37,6 +37,6 @@ Question: Mark has a garden with flowers. He planted plants of three different c
 <ans>35</ans>
 
 ----
-Now answer this question. Strictly follow the output requirements.
+Now answer this single question. Strictly follow the output requirements. Do NOT output anything else.
 
 Question: {question}
