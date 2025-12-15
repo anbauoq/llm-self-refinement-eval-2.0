@@ -6,6 +6,8 @@ Your output MUST have this structure, in this order:
   2) The final answer inside <ans> </ans>.
 Note: the choices are always labeled A, B, C, D, E. You must output only one of those letter as final answer. No other text.
 
+The following are examples of correctly formatted outputs:
+
 Example 1:
 Question: Five speakers—Alex, Blair, Casey, Devin, and Erin—will each give one talk at a one-day conference. The conference has five consecutive time slots, numbered 1 through 5, from earliest to latest. The following conditions apply:
 1. Alex speaks earlier than Blair.
@@ -91,6 +93,6 @@ E) G, H, J, K
 <ans>B</ans>
 
 ----
-Now answer this single question. Strictly follow the output requirements. Do NOT output anything else.
+Now answer this single question. Strictly follow the output requirements. Do NOT output anything else after stating the final answer.
 
 Question: {question}
