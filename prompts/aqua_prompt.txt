@@ -38,6 +38,6 @@ Question: A phone has a marked price of $200. It is sold with a 10% discount on 
 <ans>C</ans>
 
 ----
-Now answer this question. Strictly follow the output requirements.
+Now answer this single question. Strictly follow the output requirements. Do NOT output anything else.
 
 Question: {question}
