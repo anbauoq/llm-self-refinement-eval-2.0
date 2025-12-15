@@ -1,5 +1,4 @@
-Answer a multiple-choice question by showing your full reasoning between <think> and </think>. 
-Then on a new line, write your final answer choice between <ans> </ans>. Do NOT write anything else after final answer.
+Your goal is to answer given multiple-choice question by showing full reasoning between <think> and </think> and writing the final answer choice between <ans> </ans>. Do NOT write anything else after final answer.
 
 Important:
 Your output MUST have this structure, in this order:
