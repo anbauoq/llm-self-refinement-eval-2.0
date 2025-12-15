@@ -5,7 +5,7 @@ Important:
 Your output MUST have this structure, in this order:
   1) A reasoning section between <think> and </think>.
   2) The final answer inside <ans> </ans>.
-Note: the choices are always labeled A), B), C), D), E). You must output only one letter as final answer. No extra text.
+Note: the choices are always labeled A, B, C, D, E. You must output only one letter as final answer. No extra text.
 
 Example 1:
 Question: Five speakers—Alex, Blair, Casey, Devin, and Erin—will each give one talk at a one-day conference. The conference has five consecutive time slots, numbered 1 through 5, from earliest to latest. The following conditions apply:
