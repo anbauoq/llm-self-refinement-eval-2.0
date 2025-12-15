@@ -34,18 +34,17 @@ def solve_questions(
 ) -> List[Dict[str, Any]]:
     data_list = list(data) #just making a list of dictionaries, our dataset, each dict is one question with its corresponding features
     results: List[Dict[str, Any]] = [] # just initializing object where results will be stored?
-    dataset_name = dataset_module.__name__.split(".")[-1] # since dataset_module is given by utils.asdiv, extracting dataset name in this way
+    dataset_name = dataset_module.__name__.split(".")[-1]
 
     # Process in batches
     batches = batch_data(data_list, batch_size) # dividing our data into batches, list of lists, each of which contains batch_size dictionaries
 
     with torch.inference_mode(): 
         
-        retry_suffix_text = """
-        IMPORTANT FORMAT REMINDER:
-        - You must write your full reasoning between <think> and </think>.
-        - Then, on a NEW line after the reasoning, you MUST output ONLY the final answer.
-          """
+        retry_suffix_text = """ 
+        You must ONLY answer this question by writing your full reasoning between <think> and </think>,
+        and at the end stating the final answer. Do NOT output anything else. 
+        """
   
         retry_suffix_ids: List[int] = tokenizer(
             retry_suffix_text,
