@@ -29,7 +29,6 @@ def distill_prompt_formatting(prompt_body: str) -> str:
         "<｜User｜>"
         f"{prompt_body}"
         "<｜Assistant｜>"
-        "<think>\n"
     )
 
 def answers_reformatting(text: str) -> str:

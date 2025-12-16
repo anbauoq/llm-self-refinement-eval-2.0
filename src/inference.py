@@ -42,8 +42,7 @@ def solve_questions(
     with torch.inference_mode(): 
         
         retry_suffix_text = """ 
-        You must ONLY answer this question by writing your full reasoning between <think> and </think>,
-        and at the end stating the final answer. Do NOT output anything else. 
+        The last line of the output MUST be the final answer.
         """
   
         retry_suffix_ids: List[int] = tokenizer(
@@ -152,15 +151,25 @@ def solve_questions(
                 pad_id, eos_id = resolve_pad_eos(tokenizer)
                 max_new = parse_max_new_tokens(max_tokens, default=2048)
 
+
+                # set model-specific temperature
+                temp = 0.6
+                if model_name in (
+                    "microsoft/Phi-4-mini-instruct",
+                    "microsoft/Phi-4-mini-reasoning",
+                ):
+                    temp = 0.8
+
                 gen_kwargs: Dict[str, Any] = {
                     "max_new_tokens": max_new,
                     "min_new_tokens": min(64, max_new),
                     "pad_token_id": pad_id,
                     "use_cache": True,
                     "do_sample": True,
-                    "temperature": 0.6,
-                    "top_p": 0.95
+                    "temperature": temp,
+                    "top_p": 0.95,
                 }
+
                 if eos_id is not None:
                     gen_kwargs["eos_token_id"] = eos_id
 
