@@ -1,19 +1,14 @@
-You answered this question incorrectly.
-
-Your job is to analyze your earlier reasoning and then write a short HINT that would have helped you solve the problem correctly, if it had been included in the original question.
+Your job is to look at the model’s reasoning, the model’s predicted answer, and the correct answer, then write a short HINT that would have helped the model arrive at the correct answer if that hint had been included in the original question.
 
 IMPORTANT FORMAT RULES FOR THE HINT:
 - Do NOT say whether the sentence is plausible or not.
 - Do NOT use the words: "plausible", "implausible", "likely", "unlikely".
-- Do NOT write "Yes", "No", "True", "False", "correct", "incorrect", or "answer".
 - Do NOT mention "the correct answer", "your previous answer", or "you should answer ...".
 - The hint must read like neutral background information or guidance, not a verdict.
 
 Focus on:
 - Clarifying what sport or position the named player is associated with.
 - Explaining any sport-specific terms or rules that are relevant.
-- Correcting any misunderstanding from your earlier reasoning.
-- Highlighting when the sentence is mixing terminology from different sports.
 
 Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no bullet points and no extra commentary.
 
@@ -21,37 +16,37 @@ Here are some examples of good hints:
 
 Example 1:
 Question: Is the following sentence plausible? Carson Wentz set the pick and roll
-Your reasoning: I thought any professional athlete could reasonably be described using plays from different sports, so I treated this as a normal kind of offensive action.
+Your reasoning: Carson Wentz is an athlete, and “pick and roll” sounds like a common sports move to create space, so it seems plausible.
 Your answer: 1
 Correct answer: 0
-<hint>Carson Wentz is known as an American football quarterback, while a “pick and roll” is a specific offensive play in basketball, so pay attention to whether the action being described belongs to the same sport as the player.</hint>
+<hint>Carson Wentz is known as an American football quarterback. “Pick and roll” is a specific offensive play in basketball.</hint>
 
 Example 2:
 Question: Is the following sentence plausible? Jonas Valanciunas beat the buzzer
-Your reasoning: I focused on the phrase “beat the buzzer” as something that might be used in many sports and didn’t think about which sport Jonas Valanciunas actually plays.
+Your reasoning: Jonas Valanciunas is mainly known for basketball, but “beat the buzzer” sounds like something more related to track or racing, so it doesn’t seem plausible for him.
 Your answer: 0
 Correct answer: 1
-<hint>Jonas Valanciunas is a professional basketball player, and “beat the buzzer” is a common basketball expression for scoring just before the game or shot clock expires, so consider whether the phrase is standard within that sport.</hint>
+<hint>Jonas Valanciunas is a professional basketball player. “Beat the buzzer” is a common basketball expression for scoring just before the game or shot clock expires.</hint>
 
 Example 3:
 Question: Is the following sentence plausible? Draymond Green threw a touchdown
-Your reasoning: I only noticed that Draymond Green is an athlete and that touchdowns are part of sports, so I treated the combination as reasonable.
+Your reasoning: Draymond Green is known as an NBA basketball player and “touchdown” is just a way of saying he scored, so it seems plausible.
 Your answer: 1
 Correct answer: 0
-<hint>Draymond Green is a professional basketball player in the NBA, whereas a “touchdown” is a scoring play in American football, so think about whether the scoring action described actually occurs in the player’s sport.</hint>
+<hint>A “touchdown” is a specific scoring play in American football.</hint>
 
 Example 4:
-Question: Is the following sentence plausible? Liam Hendricks hit a double in the World Series
-Your reasoning: I assumed pitchers almost never hit in important games and focused on his position rather than on the rules of baseball.
-Your answer: 0
-Correct answer: 1
-<hint>Liam Hendriks is a Major League Baseball pitcher, and in some games pitchers do bat, so consider that a “double” is a standard batting result and that pitchers can sometimes achieve this in the World Series.</hint>
+Question: Is the following sentence plausible? Jorge Soler entered the attacking zone
+Your reasoning: Jorge Soler is a professional ice hockey player. “Entering the attacking zone” is a common action in ice hockey, as players move towards the opponent's goal to score. It makes sense to describe a hockey player moving towards the opponent's goal in this context.
+Your answer: 1
+Correct answer: 0
+<hint>Jorge Soler is known as a professional baseball player. “Entering the attacking zone” is terminology most associated with sports like ice hockey, not baseball.</hint>
 
 ----
 
 Now, based on the question, your reasoning, your answer, and the correct answer, write a new hint.
 
-Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no bullet points and no extra commentary.
+Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no extra commentary and without leaking correct answer.
 
 Question: {question}
 Your reasoning: {chain_of_thought}
