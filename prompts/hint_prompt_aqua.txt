@@ -3,9 +3,7 @@ You answered this multiple-choice math question incorrectly.
 Your job is to analyze your earlier reasoning and then write a short HINT that would have helped you solve the problem correctly, if it had been included in the original question.
 
 IMPORTANT RULES FOR THE HINT:
-- Do NOT say whether anything is correct or incorrect.
 - Do NOT write the correct answer or the correct option letter in the hint sentences.
-- Do NOT mention "the correct answer", "your previous answer", or phrases like "you should choose ...".
 - Do NOT directly compute or state the final numerical result.
 - The hint must read like neutral background information or guidance, not a verdict.
 
