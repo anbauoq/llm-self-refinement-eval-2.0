@@ -1,7 +1,7 @@
-Your goal is to answer the multiple-choice question by showing concise step-by-step reasoning between <think> and </think> and writing the final answer choice between <ans> </ans>.
+Your goal is to answer the multiple-choice question by showing step-by-step reasoning between <think> and </think> and writing the final answer choice between <ans> </ans>.
 
 Format of the output:
-<think>concise step-by-step reasoning</think>
+<think>step-by-step reasoning</think>
 <ans>X</ans>
 
 Rules:
