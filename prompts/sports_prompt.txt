@@ -1,6 +1,6 @@
 Your goal is to answer given plausibility question by showing step-by-step reasoning between <think> and </think> and writing final answer choice between <ans> </ans>.
 
-Format of the output:
+You MUST output exactly two blocks, in this order, with no extra text before, between, or after them:
 <think>concise step-by-step reasoning</think>
 <ans>X</ans>
 
