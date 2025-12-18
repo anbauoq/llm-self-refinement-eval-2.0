@@ -1,6 +1,6 @@
-Your goal is to answer the multiple-choice question by showing step-by-step reasoning between <think> and </think> and writing the final answer choice between <ans> </ans>.
+Your goal is to answer the multiple-choice question by showing short step-by-step reasoning between <think> and </think> and writing the final answer choice between <ans> </ans>.
 
-Format of the output:
+You MUST output exactly two blocks, in this order, with no extra text before, between, or after them:
 <think> step-by-step reasoning</think>
 <ans>X</ans>
 
