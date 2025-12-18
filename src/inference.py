@@ -5,7 +5,7 @@ import torch
 import logging
 from tqdm import tqdm
 from typing import Any, Dict, Iterable, List, Optional
-from prompts import format_initial_prompt, format_post_hint_prompt, format_hint_prompt
+from prompts import format_initial_prompt, format_post_hint_prompt, format_hint_prompt, answers_reformatting
 from hints import extract_hint_text, is_valid_hint, strip_answer_from_hint
 from utils import ( 
     extract_cot,
@@ -43,8 +43,18 @@ def solve_questions(
     with torch.inference_mode(): 
         
         followup_user_msg = (
-            "Please state the final answer in the required format"
+            "Explicitly write your reasoning on how to solve this problem inside <think> </think> and state the final answer isnide <ans>...</ans>. You MUST end your response with the final answer!"
         )
+
+        if model in (
+            "Qwen/Qwen2.5-Math-1.5B",
+            "Qwen/Qwen2.5-Math-7B",
+            "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+            "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
+            "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        ):
+            followup_user_msg = answers_reformatting(followup_user_msg)
+
 
 
         for batch in tqdm(batches, desc=f"Solving questions (batch_size={batch_size})"): # outer loop, considering one batch at a time
