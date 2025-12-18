@@ -2,12 +2,16 @@ import re
 from typing import Optional, Tuple, List, Dict, Any
 
 def process_item(item: Dict[str, Any]) -> Dict[str, Any]:
+    stem = item["question"].split("\n# Answer option:")[0].strip()
+
+    opts = item["options"]  # already clean list like ["A)...", ...]
+    q_formatted = stem + "\n\nOptions:\n" + "\n".join(opts)
 
     return {
-        "id": item.get("id"),
-        "question": item['question'],
+        "id": item["id"],
+        "question": q_formatted,
         "answer": item["answer"].strip().upper(),
-        "options": item.get("options", [])
+        "options": opts,
     }
 
 def extract_answer(text: str, options: Optional[List[str]] = None) -> str:
