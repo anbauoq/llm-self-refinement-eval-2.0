@@ -143,3 +143,37 @@ def strip_prompt_from_outputs(
     if output_ids.size(0) > prompt_length:
         return output_ids[prompt_length:]
     return output_ids
+
+def encode_chat(
+    tokenizer,
+    messages: List[Dict[str, str]],
+    add_generation_prompt: bool = True,
+) -> List[int]:
+    """
+    Convert chat messages -> input_ids.
+    Uses tokenizer.apply_chat_template if available; otherwise falls back to
+    a simple plaintext conversation format.
+    """
+    can_chat = (
+        hasattr(tokenizer, "apply_chat_template")
+        and getattr(tokenizer, "chat_template", None)
+    )
+
+    if can_chat:
+        return tokenizer.apply_chat_template(
+            messages,
+            tokenize=True,
+            add_generation_prompt=add_generation_prompt,
+        )
+
+    # Fallback: plain text "User:/Assistant:" chat.
+    text_parts = []
+    for m in messages:
+        role = (m.get("role") or "user").strip().lower()
+        content = (m.get("content") or "").strip()
+        text_parts.append(f"{role}: {content}")
+    if add_generation_prompt:
+        text_parts.append("assistant:")
+    text = "\n".join(text_parts)
+
+    return tokenizer(text, add_special_tokens=True)["input_ids"]

@@ -30,10 +30,10 @@ B) Slot 1: Erin;  Slot 2: Alex;  Slot 3: Casey; Slot 4: Devin; Slot 5: Blair
 C) Slot 1: Casey; Slot 2: Devin; Slot 3: Alex;  Slot 4: Blair; Slot 5: Erin
 D) Slot 1: Casey; Slot 2: Alex;  Slot 3: Devin; Slot 4: Blair; Slot 5: Erin
 E) Slot 1: Blair; Slot 2: Alex;  Slot 3: Casey; Slot 4: Devin; Slot 5: Erin
-Your reasoning: I focused mainly on placing Casey immediately before Devin and making sure Erin wasn’t in slot 1, and once I saw an option that satisfied those pieces, I chose it without checking all the constraints.
+Your reasoning: Casey is before Devin, and Alex is before Blair, so the ordering seems to satisfy both constraints. Erin is not in slot 1, so that rule is also met, making this schedule look workable.
 Your answer: D
 Correct answer: C
-<hint> Make sure that any candidate schedule satisfies every condition at the same time, including both the “immediately before” requirement for Casey and Devin and the ordering requirement that Alex must appear earlier than Blair, not just the most salient rule.</hint>
+<hint> “Immediately before” means the two speakers must be in back-to-back slots with no one between them. Treat Casey–Devin as a fixed consecutive pair, then check the Alex-before-Blair rule around that pair.</hint>
 
 Example 2:
 Question: A committee of exactly three people is to be formed from four candidates: Rosa, Sam, Tariq, and Uma. The following conditions apply:
@@ -46,10 +46,10 @@ B) Sam, Tariq, Uma
 C) Rosa, Sam, Uma
 D) Sam only
 E) Rosa, Tariq, Uma
-Your reasoning: I looked for any set that included Sam and had three people, and I picked the first one that seemed to satisfy that, without carefully applying the conditional rules involving Rosa, Tariq, and Uma.
+Your reasoning: Sam is included, and the only strict “unless” rule is about Uma needing Rosa, which doesn’t matter here since Uma isn’t chosen. So Rosa, Sam, and Tariq seems like a valid set of three.
 Your answer: A
 Correct answer: C
-<hint> Use the conditional rules to filter combinations: every valid committee must include Sam, any committee with Rosa cannot include Tariq, and any committee with Uma must also include Rosa, so only sets that simultaneously respect all three facts are viable.</hint>
+<hint> As soon as Rosa is on the committee, Tariq is ruled out automatically. Check the “if Rosa, then not Tariq” condition before considering any other combinations.</hint>
 
 Example 3:
 Question: Three houses—A, B, and C—are each painted a different color, chosen from exactly red, green, and blue. No two houses share the same color. The following conditions apply:
@@ -62,10 +62,10 @@ B) A: red;    B: blue;  C: green
 C) A: green;  B: red;   C: blue
 D) A: blue;   B: blue;  C: red
 E) A: green;  B: blue;  C: red
-Your reasoning: I mainly focused on making sure each house had a different color and didn’t check carefully which colors were forbidden for A and B, especially the restriction on A not being red.
+House B isn’t blue, so green for B works, and house C can be blue. That leaves red for A, which uses all three colors once, so it looks consistent.
 Your answer: A
 Correct answer: C
-<hint> Start by enforcing the forbidden-color rules for each house (A cannot be red, B cannot be blue, C must be green or blue) and only then check that the remaining assignments use three different colors without violating those individual restrictions.</hint>
+<hint> Eliminate any choice that paints House A red right away. After that, use “B is not blue” and “C is either green or blue” to narrow the remaining color placements.</hint>
 
 Example 4:
 Question: Three packages—J, K, and L—are each shipped on a different day, on three consecutive days from Monday through Wednesday. The following conditions apply:
@@ -77,10 +77,10 @@ B) J is shipped on Wednesday.
 C) K is shipped on Monday.
 D) L is shipped on Tuesday.
 E) L is shipped on Wednesday.
-Your reasoning: I picked a statement that seemed consistent with one possible arrangement and did not check whether it had to hold in every arrangement that satisfies the rules.
+Your reasoning: Since L can’t be shipped on Monday, it feels like L must be Tuesday, leaving Monday and Wednesday for K and J. With K earlier than J, that arrangement seems forced, so L on Tuesday appears necessary.
 Your answer: D
 Correct answer: C
-<hint> For a “must be true” question, list all possible day assignments that satisfy the rules and look for the condition that holds in every such schedule, not just one that works in a single example arrangement.</hint>
+<hint> Test both possibilities for L: Tuesday and Wednesday. In each case, place K and J on the two remaining days while keeping K earlier than J, and see what stays the same across both setups.</hint>
 
 ----
 

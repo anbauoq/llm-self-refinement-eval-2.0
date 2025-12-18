@@ -21,15 +21,15 @@ Here are some examples of good hints:
 Example 1:
 Question: A company produces 420 units of a particular computer component every month, at a production cost to the company of $110 per component, and sells all of the components by the end of each month. What is the minimum selling price per component that will guarantee that the yearly profit (revenue from sales minus production costs) will be at least $626,400?
 # Answer option: ['A)226', 'B)230', 'C)240', 'D)260', 'E)280']
-Your reasoning: I treated 420 as the total number of units for the whole year instead of per month, so I used 420 directly in the inequality instead of multiplying by 12.
+Your reasoning: They make 420 each month, so in a year that’s 420×12 units. I set yearly profit as (420×12×selling price) minus 110, and that gave a price around 228, so I picked the closest option 226.
 Your answer: A
 Correct answer: C
-<hint> First compute how many units are produced in a full year by multiplying the monthly production by 12, then set up an inequality where yearly profit equals (selling price minus cost per unit) times the yearly number of units and make sure the result is at least the target profit before comparing to the answer options.</hint>
+<hint> Profit per unit is selling price minus 110, and yearly profit is (selling price − 110) × 420 × 12. After you compute the minimum price, choose an option that is at least that value, not just the closest one.</hint>
 
 Example 2:
 Question: In how many ways can the letters of the word "PROBLEC" be rearranged to make 7-letter words such that none of the letters repeat?
 # Answer option: ['A)2!', 'B)3!', 'C)7!', 'D)8!', 'E)9!']
-Your reasoning: I multiplied by 8! because I thought there were 8 positions instead of counting the actual number of letters.
+Your reasoning: 
 Your answer: D
 Correct answer: C
 <hint> Count how many distinct letters actually appear in the word and use the factorial of that number to count permutations, making sure you do not introduce extra positions that are not there in the original word.</hint>

@@ -74,32 +74,17 @@ def format_initial_prompt(
     template = prompt_path.read_text(encoding="utf-8")
     body = template.format(question=question.strip())
 
-    if model in ("microsoft/Phi-4-mini-instruct", "microsoft/Phi-4-mini-reasoning"):
-        return phi4_prompt_formatting(body)
-
-    if model == "google/gemma-2-2b-it":
-        return gemma_prompt_formatting(body)
-
-    if model == "meta-llama/Meta-Llama-3.1-8B-Instruct":
-        return llama_prompt_formatting(body)
-
-    # ---- Distill chat models: reformat answers + apply distill chat wrapper ----
     if model in (
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
         "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
         "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
-    ):
-        prompt_body = answers_reformatting(body)
-        return distill_prompt_formatting(prompt_body)
-
-    # ---- Base Qwen math: just reformat answers (no chat wrapper) ----
-    if model in (
         "Qwen/Qwen2.5-Math-1.5B",
         "Qwen/Qwen2.5-Math-7B",
     ):
-        return answers_reformatting(body)
+        body = answers_reformatting(body)
 
     return body
+
 
 
 def format_post_hint_prompt(
@@ -131,8 +116,7 @@ def format_post_hint_prompt(
         # Fallback: if the template doesn't contain "Question:", just append.
         combined = f"{body.rstrip()}\n\nHint: {hint_text}\n"
     else:
-        # Prefer inserting the hint right before the model's <think> (if present)
-        # so the hint appears after the question/options and before reasoning.
+
         think_idx = body.find("<think", q_idx)
         insert_at = think_idx if think_idx != -1 else len(body)
 
@@ -141,32 +125,17 @@ def format_post_hint_prompt(
         combined = f"{before}\n\nHint: {hint_text}\n\n{after}"
 
     # --- model-specific formatting ---
-    if model in ("microsoft/Phi-4-mini-instruct", "microsoft/Phi-4-mini-reasoning"):
-        return phi4_prompt_formatting(combined)
-
-    if model == "google/gemma-2-2b-it":
-        return gemma_prompt_formatting(combined)
-
-    if model == "meta-llama/Meta-Llama-3.1-8B-Instruct":
-        return llama_prompt_formatting(combined)
-
-    # DeepSeek R1 distill models: reformat + apply distill chat wrapper
     if model in (
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
         "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
         "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
-    ):
-        prompt_body = answers_reformatting(combined)
-        return distill_prompt_formatting(prompt_body)
-
-    # Base Qwen Math models: reformat only (no chat wrapper)
-    if model in (
         "Qwen/Qwen2.5-Math-1.5B",
         "Qwen/Qwen2.5-Math-7B",
     ):
-        return answers_reformatting(combined)
+        combined = answers_reformatting(combined)
 
     return combined
+
 
 
 def format_hint_prompt(
@@ -200,3 +169,37 @@ def format_hint_prompt(
         chain_of_thought=str(chain_of_thought).strip(),
         correct_answer=str(correct_answer).strip(),
     )
+
+# prompts.py
+def format_initial_body(question: str, model: str, dataset_name: str) -> str:
+    prompt_file_map = {"asdiv": "arithmetic_prompt.txt", "gsm8k": "arithmetic_prompt.txt"}
+    prompt_filename = prompt_file_map.get(dataset_name, f"{dataset_name}_prompt.txt")
+    template = (Path("prompts") / prompt_filename).read_text(encoding="utf-8")
+    body = template.format(question=question.strip())
+
+    # Keep your special reformatting for these families (same as you do now)
+    if model in (
+        "Qwen/Qwen2.5-Math-1.5B", "Qwen/Qwen2.5-Math-7B",
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+        "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+    ):
+        body = answers_reformatting(body)
+
+    return body
+
+
+def format_post_hint_body(question: str, model: str, hint: str, dataset_name: str) -> str:
+    # copy your current hint-injection logic, but return `combined` (content only)
+    ...
+    combined = ...  # same logic you already have
+
+    if model in (
+        "Qwen/Qwen2.5-Math-1.5B", "Qwen/Qwen2.5-Math-7B",
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+        "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+    ):
+        combined = answers_reformatting(combined)
+
+    return combined

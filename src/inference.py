@@ -13,7 +13,8 @@ from utils import (
     parse_max_new_tokens,
     resolve_pad_eos,
     batch_data,
-    strip_prompt_from_outputs
+    strip_prompt_from_outputs,
+    encode_chat
 )
 
 
@@ -41,14 +42,10 @@ def solve_questions(
 
     with torch.inference_mode(): 
         
-        retry_suffix_text = """ 
-        The last line of the output MUST be the final answer.
-        """
-  
-        retry_suffix_ids: List[int] = tokenizer(
-            retry_suffix_text,
-            add_special_tokens=False,
-        )["input_ids"]
+        followup_user_msg = (
+            "Please state the final answer in the required format"
+        )
+
 
         for batch in tqdm(batches, desc=f"Solving questions (batch_size={batch_size})"): # outer loop, considering one batch at a time
             
@@ -66,7 +63,8 @@ def solve_questions(
                     processed = {
                         "id": item["id"],
                         "question": item["question"],
-                        "answer": item["ground_truth"]
+                        "answer": item["ground_truth"],
+                        "options": item.get("options", [])
                     }
 
                 if inject_hint:
@@ -87,16 +85,19 @@ def solve_questions(
 
 
             
-            # pre-tokenize base prompts once per batch ---
-            base_encoded = tokenizer( 
-                prompts_batch,
-                add_special_tokens=True,
-                return_tensors=None,
-                padding=False
-            )
-            
-            base_input_ids: List[List[int]] = base_encoded["input_ids"] # tokenizations for all questions in the current batch
 
+
+            # Pre-encode base prompts once per item.
+            base_input_ids: List[List[int]] = []
+            for p in prompts_batch:
+                ids = encode_chat(
+                    tokenizer,
+                    messages=[{"role": "user", "content": p}],
+                    add_generation_prompt=True,
+                )
+                base_input_ids.append(list(ids))
+
+            
 
 
             batch_size_actual = len(batch) # just for the case when last batch is smaller
@@ -109,6 +110,8 @@ def solve_questions(
             pending_indices = list(range(batch_size_actual)) # initially all indices, all questions are pending (unanswered)
 
             last_attempt_is_retry: List[bool] = [False] * batch_size_actual
+            retry_logged: set[int] = set()  # global_idx values we've already logged as retried
+
 
             for attempt in range(max_attempts):
 
@@ -118,16 +121,47 @@ def solve_questions(
 
     
                 is_retry = attempt > 0
+                if is_retry:
+                    for idx in pending_indices:
+                        if idx not in retry_logged:
+                            qid = processed_batch[idx].get("id", idx)
+                            prev = (last_raw_outputs[idx] or "")
+                            logger.info(
+                                f"[RETRY] dataset={dataset_name} id={qid} attempt={attempt+1}/{max_attempts} "
+                                f"reason=no_valid_answer_extracted prev_chars={len(prev)} "
+                                f"action=chat_continuation_followup"
+                            )
+                            retry_logged.add(idx)
 
-                # Build tokenized inputs only for unresolved items (no re-tokenizing full text)
+
                 current_input_ids: List[List[int]] = []
                 current_indices: List[int] = []
+
                 for idx in pending_indices:
-                    ids = list(base_input_ids[idx])  # copy to avoid mutating base
-                    if is_retry:
-                        ids = ids + retry_suffix_ids
+                    if not is_retry:
+                        ids = list(base_input_ids[idx])
+                    else:
+                        prev = (last_raw_outputs[idx] or "").strip()
+                        # keep it from exploding prompt length
+                        if len(prev) > 4000:
+                            prev = prev[-4000:]
+
+                        # Multi-turn chat continuation:
+                        # user -> assistant(prev output) -> user(followup) -> assistant(to generate)
+                        ids = encode_chat(
+                            tokenizer,
+                            messages=[
+                                {"role": "user", "content": prompts_batch[idx]},
+                                {"role": "assistant", "content": prev},
+                                {"role": "user", "content": followup_user_msg},
+                            ],
+                            add_generation_prompt=True,
+                        )
+                        ids = list(ids)
+
                     current_input_ids.append(ids)
                     current_indices.append(idx)
+
 
                 # Pad unresolved inputs to tensor form
                 current_attention = [[1] * len(ids) for ids in current_input_ids]
@@ -191,7 +225,8 @@ def solve_questions(
                     last_raw_outputs[global_idx] = trimmed_decoded
                                     
                     cot = extract_cot(trimmed_decoded)
-                    options = processed.get("options", item.get("options", []))
+                    options = processed.get("options", [])
+
 
                     if dataset_name == "aqua":
                         pred_answer = dataset_module.extract_answer(trimmed_decoded, options=options) or ""
@@ -206,6 +241,14 @@ def solve_questions(
 
                     if is_retry:
                         last_attempt_is_retry[global_idx] = True
+
+                    if is_retry:
+                        qid = processed.get("id", global_idx)
+                        logger.info(
+                            f"[RETRY_SUCCESS] dataset={dataset_name} id={qid} attempt={attempt+1}/{max_attempts} "
+                            f"pred={pred_answer} correct={is_correct}"
+                        )
+
 
                     batch_results[global_idx] = {
                         "id": processed["id"],
@@ -223,8 +266,15 @@ def solve_questions(
                 pending_indices = [i for i in pending_indices if batch_results[i] is None]
 
             # Fill in failures for items that never produced a valid answer
+            # Fill in failures for items that never produced a valid answer
             for idx, res in enumerate(batch_results):
                 if res is None:
+                    qid = processed_batch[idx].get("id", idx)
+                    logger.warning(
+                        f"[FAILED] dataset={dataset_name} id={qid} attempts={max_attempts} "
+                        f"from_retry={last_attempt_is_retry[idx]} last_output_chars={len(last_raw_outputs[idx] or '')}"
+                    )
+
                     processed = processed_batch[idx]
                     raw_out = last_raw_outputs[idx]
                     if raw_out is not None:
@@ -250,6 +300,8 @@ def solve_questions(
                             "is_correct": None,
                             "from_retry": last_attempt_is_retry[idx]
                         }
+
+
 
             # Extend global results in batch order
             results.extend(batch_results)
@@ -297,17 +349,29 @@ def generate_hints(
                 if not pending_indices:
                     break
 
-                # Tokenize prompts only for unresolved items
-                current_prompts = [prompts_batch[i] for i in pending_indices]
+                current_input_ids: List[List[int]] = []
+                for i in pending_indices:
+                    ids = encode_chat(
+                        tokenizer,
+                        messages=[{"role": "user", "content": prompts_batch[i]}],
+                        add_generation_prompt=True,
+                    )
+                    current_input_ids.append(list(ids))
 
-                inputs = tokenizer(
-                    current_prompts,
-                    return_tensors="pt",
+                current_attention = [[1] * len(ids) for ids in current_input_ids]
+                padded = tokenizer.pad(
+                    {"input_ids": current_input_ids, "attention_mask": current_attention},
                     padding=True,
-                    truncation=False,
-                ).to(model.device)
+                    return_tensors="pt",
+                )
 
+                if "attention_mask" not in padded:
+                    pad_id = tokenizer.pad_token_id
+                    padded["attention_mask"] = (padded["input_ids"] != pad_id).long()
+
+                inputs = {k: v.to(model.device) for k, v in padded.items()}
                 prompt_length = inputs["input_ids"].shape[1]
+
 
                 pad_id, eos_id = resolve_pad_eos(tokenizer)
                 max_new = parse_max_new_tokens(max_tokens, default=1024)
