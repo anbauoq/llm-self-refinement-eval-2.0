@@ -7,14 +7,7 @@ IMPORTANT RULES FOR THE HINT:
 - Do NOT directly compute or state the final numerical result.
 - The hint must read like neutral background information or guidance, not a verdict.
 
-Focus on:
-- Clarifying what each quantity in the problem represents and how they relate.
-- Highlighting the correct algebraic setup and order of operations needed (which numbers to add, subtract, multiply, or divide first).
-- Pointing out important constraints, unit conversions, or intermediate steps that were overlooked or misapplied.
-
-Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no bullet points and no extra commentary.
-
-Here are some examples of good hints:
+Here are a few examples of hints that follow the requirements:
 
 Example 1:
 Question: A company produces 420 units of a particular computer component every month, at a production cost to the company of $110 per component, and sells all of the components by the end of each month. What is the minimum selling price per component that will guarantee that the yearly profit (revenue from sales minus production costs) will be at least $626,400.
@@ -30,7 +23,7 @@ Your reasoning: They make 420 units per month for 12 months, so in a year they s
 
 Your answer: B
 Correct answer: C
-<hint>Compute the exact price that makes yearly profit exactly $626,400. The correct choice cannot be smaller than that value. Pick the smallest option that meets or exceeds it, not the closest.</hint>
+<hint>The selling price can not be smaller than the exact value that makes yearly profit equal to $626,400, because anything smaller would not guarantee meeting that target.</hint>
 
 Example 2:
 Question: In how many ways can the letters of the word \"PROBLEC\" be rearranged to make 7 letter words such that none of the letters repeat?
@@ -73,7 +66,7 @@ D)190
 E)195
 
 Your reasoning: The marked price is 200. A 10% discount is 20, so the discounted price is 200 - 20 = 180. Then a 5% sales tax is 5% of the original 200, which is 10, so add 10 to 180 to get 190. Therefore the final price is 190, which is option D.
-Your answer: C
+Your answer: D
 Correct answer: E
 <hint>When computing the 5% tax, apply it to the discounted price after the 10% discount, not to the original 200.</hint>
 
@@ -81,7 +74,7 @@ Correct answer: E
 
 Now, based on your reasoning, your answer, and the correct answer, write a hint to this question.
 
-Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no bullet points, no extra commentary and without leaking correct answer.
+Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no extra commentary and without leaking correct answer.
 
 Question: {question}
 Your reasoning: {chain_of_thought}
