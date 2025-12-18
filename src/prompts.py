@@ -169,37 +169,3 @@ def format_hint_prompt(
         chain_of_thought=str(chain_of_thought).strip(),
         correct_answer=str(correct_answer).strip(),
     )
-
-# prompts.py
-def format_initial_body(question: str, model: str, dataset_name: str) -> str:
-    prompt_file_map = {"asdiv": "arithmetic_prompt.txt", "gsm8k": "arithmetic_prompt.txt"}
-    prompt_filename = prompt_file_map.get(dataset_name, f"{dataset_name}_prompt.txt")
-    template = (Path("prompts") / prompt_filename).read_text(encoding="utf-8")
-    body = template.format(question=question.strip())
-
-    # Keep your special reformatting for these families (same as you do now)
-    if model in (
-        "Qwen/Qwen2.5-Math-1.5B", "Qwen/Qwen2.5-Math-7B",
-        "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
-        "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
-        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
-    ):
-        body = answers_reformatting(body)
-
-    return body
-
-
-def format_post_hint_body(question: str, model: str, hint: str, dataset_name: str) -> str:
-    # copy your current hint-injection logic, but return `combined` (content only)
-    ...
-    combined = ...  # same logic you already have
-
-    if model in (
-        "Qwen/Qwen2.5-Math-1.5B", "Qwen/Qwen2.5-Math-7B",
-        "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
-        "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
-        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
-    ):
-        combined = answers_reformatting(combined)
-
-    return combined
