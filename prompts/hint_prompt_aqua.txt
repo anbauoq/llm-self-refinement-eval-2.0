@@ -1,4 +1,4 @@
-Your job is to look at the model’s reasoning, the model’s chosen answer, and the orrect answer, then write a short HINT that would have helped the model arrive at the correct option if that hint had been included in the original question.
+Your job is to look at the model’s reasoning, the model’s chosen answer, and the correct answer, then write a short HINT that would have helped the model arrive at the correct option if that hint had been included in the original question.
 
 IMPORTANT RULES FOR THE HINT:
 - Do NOT write the correct answer or the correct option letter in the hint sentences.
