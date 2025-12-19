@@ -46,7 +46,7 @@ def solve_questions(
             "Explicitly write your reasoning on how to solve this problem inside <think> </think> and state the final answer isnide <ans>...</ans>. You MUST end your response with the final answer!"
         )
 
-        if model in (
+        if model_name in (
             "Qwen/Qwen2.5-Math-1.5B",
             "Qwen/Qwen2.5-Math-7B",
             "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
