@@ -6,10 +6,9 @@ import logging
 from tqdm import tqdm
 from typing import Any, Dict, Iterable, List, Optional
 from prompts import format_initial_prompt, format_post_hint_prompt, format_hint_prompt, answers_reformatting
+from parsing import extract_cot, exact_match
 from hints import extract_hint_text, is_valid_hint, strip_answer_from_hint
-from utils import ( 
-    extract_cot,
-    exact_match,
+from generation import ( 
     resolve_pad_eos,
     batch_data,
     strip_prompt_from_outputs,
@@ -62,7 +61,17 @@ def solve_questions(
             for item in batch: # considering one question (dictionary) at a time
                 
                 # Process item
-                processed = dataset_module.process_item(item)
+                if "ground_truth" not in item: # during step 1
+                    
+                    processed = dataset_module.process_item(item)
+                    
+                else: # during step 3
+                    processed = {
+                        "id": item["id"],
+                        "question": item["question"],
+                        "answer": item["ground_truth"],
+                        "options": item.get("options", [])
+                    }
 
                 # Prepare prompt
                 if inject_hint:

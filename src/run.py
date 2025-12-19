@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 # run.py - Fast inference with bfloat16, FlashAttention, and batching
-import torch
-import importlib
+
 import logging
 from argparse import ArgumentParser
 from pathlib import Path
-from transformers import AutoTokenizer, AutoModelForCausalLM
 from inference import solve_questions, generate_hints
-from utils import load_data, save_data
-from runner_utils import load_dataset_module, load_model_and_tokenizer
+from io_jsonl import load_data, save_data
+from loading import load_dataset_module, load_model_and_tokenizer
 
 # Set up a logger for better feedback
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

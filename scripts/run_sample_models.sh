@@ -2,28 +2,28 @@
 # set -euo pipefail
 
 MODELS_NON_REASONING=(
-  "google/gemma-2-2b-it"
-  "meta-llama/Meta-Llama-3.1-8B-Instruct"
-  "microsoft/Phi-4-mini-instruct"
-  "Qwen/Qwen2.5-Math-1.5B"
+  # "google/gemma-2-2b-it"
+  # "meta-llama/Meta-Llama-3.1-8B-Instruct"
+  # "microsoft/Phi-4-mini-instruct"
+  # "Qwen/Qwen2.5-Math-1.5B"
   #"Qwen/Qwen2.5-Math-7B"
 )
 
 MODELS_REASONING=(
   "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
-  "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
+  #"deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
   #"deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
-  "microsoft/Phi-4-mini-reasoning"
+  #"microsoft/Phi-4-mini-reasoning"
 )
 
-DATASETS=("ar_lsat" "aqua" "sports" "gsm8k")
+DATASETS=("ar_lsat" "aqua" "sports")
 TOKENS=(1024)
 
 INPUT_DIR="data"
 OUTPUT_DIR_REASONING="results/sample_results/reasoning"
 OUTPUT_DIR_NONREASONING="results/sample_results/nonreasoning"
 
-MAX_SAMPLES=10
+MAX_SAMPLES=5
 BATCH_SIZE=2
 
 RUNNER="src/run.py"
