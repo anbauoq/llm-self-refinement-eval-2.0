@@ -1,8 +1,8 @@
 Your job is to look at the model’s reasoning, the model’s chosen answer, and the correct answer, then write a short HINT that would have helped the model arrive at the correct option if that hint had been included in the original question.
 
 IMPORTANT RULES FOR THE HINT:
-- Do NOT write the correct answer or the correct option letter in the hint sentences.
-- Do NOT write the correct answer, the correct option letter, or any text that uniquely identifies the correct option.
+- Do NOT include the correct answer, the correct option letter, or any wording that points to one unique option.
+- Do NOT mention any option letters (A–E) or say any option is wrong/right.
 - The hint must read like neutral background information or guidance, not a verdict.
 
 Here are a few examples of hints that follow the requirements:
