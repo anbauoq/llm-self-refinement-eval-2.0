@@ -10,7 +10,6 @@ from hints import extract_hint_text, is_valid_hint, strip_answer_from_hint
 from utils import ( 
     extract_cot,
     exact_match,
-    parse_max_new_tokens,
     resolve_pad_eos,
     batch_data,
     strip_prompt_from_outputs,
@@ -30,7 +29,7 @@ def solve_questions(
     model_name,
     inject_hint: bool = False,
     max_attempts: int = 3,
-    max_tokens: Optional[int] = None,
+    max_tokens: int = 2048,
     batch_size: int = 8,
 ) -> List[Dict[str, Any]]:
     data_list = list(data) # making a list of dictionaries, our dataset, each dict is one question with its corresponding features
@@ -180,7 +179,6 @@ def solve_questions(
                 prompt_length = inputs["input_ids"].shape[1]
 
                 pad_id, eos_id = resolve_pad_eos(tokenizer)
-                max_new = parse_max_new_tokens(max_tokens, default=2048)
 
 
                 # set model-specific temperature
@@ -192,8 +190,8 @@ def solve_questions(
                     temp = 0.8
 
                 gen_kwargs: Dict[str, Any] = {
-                    "max_new_tokens": max_new,
-                    #"min_new_tokens": min(64, max_new),
+                    "max_new_tokens": max_tokens,
+                    #"min_new_tokens": min(64, max_tokens),
                     "pad_token_id": pad_id,
                     "use_cache": True,
                     "do_sample": True,
@@ -309,7 +307,7 @@ def generate_hints(
     tokenizer,
     dataset_name: str,
     num_attempts: int = 3,
-    max_tokens: Optional[int] = None,
+    max_tokens: int = 2048,
     batch_size: int = 8
 ) -> List[Dict[str, Any]]:
     """
@@ -369,11 +367,10 @@ def generate_hints(
 
 
                 pad_id, eos_id = resolve_pad_eos(tokenizer)
-                max_new = parse_max_new_tokens(max_tokens, default=1024)
 
                 gen_kwargs: Dict[str, Any] = {
-                    "max_new_tokens": max_new,
-                    #"min_new_tokens": min(64, max_new),
+                    "max_new_tokens": max_tokens,
+                    #"min_new_tokens": min(64, max_tokens),
                     "pad_token_id": pad_id,
                     "use_cache": True,
                     "do_sample": True,
