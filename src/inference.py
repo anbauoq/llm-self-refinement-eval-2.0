@@ -162,14 +162,12 @@ def solve_questions(
                     current_indices.append(idx)
 
 
-                # Pad unresolved inputs to tensor form
-                current_attention = [[1] * len(ids) for ids in current_input_ids]
-
                 padded = tokenizer.pad(
-                    {"input_ids": current_input_ids, "attention_mask": current_attention},
+                    {"input_ids": current_input_ids},
                     padding=True,
                     return_tensors="pt",
                 )
+
 
                 # Safety fallback: if some tokenizer still didn't return it, create it from padding
                 if "attention_mask" not in padded:
@@ -195,7 +193,7 @@ def solve_questions(
 
                 gen_kwargs: Dict[str, Any] = {
                     "max_new_tokens": max_new,
-                    "min_new_tokens": min(64, max_new),
+                    #"min_new_tokens": min(64, max_new),
                     "pad_token_id": pad_id,
                     "use_cache": True,
                     "do_sample": True,
@@ -206,8 +204,6 @@ def solve_questions(
                 if eos_id is not None:
                     gen_kwargs["eos_token_id"] = eos_id
 
-                if is_retry:
-                    torch.manual_seed(21 + attempt)
 
                 output_ids = model.generate(**inputs, **gen_kwargs)
 
@@ -356,12 +352,13 @@ def generate_hints(
                     )
                     current_input_ids.append(list(ids))
 
-                current_attention = [[1] * len(ids) for ids in current_input_ids]
+                
                 padded = tokenizer.pad(
-                    {"input_ids": current_input_ids, "attention_mask": current_attention},
+                    {"input_ids": current_input_ids},
                     padding=True,
                     return_tensors="pt",
                 )
+
 
                 if "attention_mask" not in padded:
                     pad_id = tokenizer.pad_token_id
@@ -376,7 +373,7 @@ def generate_hints(
 
                 gen_kwargs: Dict[str, Any] = {
                     "max_new_tokens": max_new,
-                    "min_new_tokens": min(64, max_new),
+                    #"min_new_tokens": min(64, max_new),
                     "pad_token_id": pad_id,
                     "use_cache": True,
                     "do_sample": True,
@@ -386,7 +383,6 @@ def generate_hints(
                 if eos_id is not None:
                     gen_kwargs["eos_token_id"] = eos_id
 
-                torch.manual_seed(21 + attempt)
 
                 out_ids = model.generate(**inputs, **gen_kwargs)
 
