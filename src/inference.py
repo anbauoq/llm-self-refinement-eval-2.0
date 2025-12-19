@@ -33,8 +33,8 @@ def solve_questions(
     max_tokens: Optional[int] = None,
     batch_size: int = 8,
 ) -> List[Dict[str, Any]]:
-    data_list = list(data) #just making a list of dictionaries, our dataset, each dict is one question with its corresponding features
-    results: List[Dict[str, Any]] = [] # just initializing object where results will be stored?
+    data_list = list(data) # making a list of dictionaries, our dataset, each dict is one question with its corresponding features
+    results: List[Dict[str, Any]] = []
     dataset_name = dataset_module.__name__.split(".")[-1]
 
     # Process in batches
@@ -55,33 +55,23 @@ def solve_questions(
         ):
             followup_user_msg = answers_reformatting(followup_user_msg)
 
-
-
         for batch in tqdm(batches, desc=f"Solving questions (batch_size={batch_size})"): # outer loop, considering one batch at a time
             
-            # Prepare batch: process items + base prompts (without retry suffix) 
+            # Prepare batch: process items + base prompts
             processed_batch: List[Dict[str, Any]] = [] # initializing a list that is gonna contain each question processed - dictionaries with features we need
             prompts_batch: List[str] = [] # initializing a list where generated prompts are going to be stored
 
-            for item in batch: # considering one question (dictionary) at a time, want to build the data structure that contains everything for further inference!
+            for item in batch: # considering one question (dictionary) at a time
+                
                 # Process item
-                if "ground_truth" not in item: # when doing our first step and the data is not procecessed yet, i.e. no ground_truth etc etc
-                    
-                    processed = dataset_module.process_item(item)
-                    
-                else: # when doing step 3 everything is already processed
-                    processed = {
-                        "id": item["id"],
-                        "question": item["question"],
-                        "answer": item["ground_truth"],
-                        "options": item.get("options", [])
-                    }
+                processed = dataset_module.process_item(item)
 
+                # Prepare prompt
                 if inject_hint:
                     base_prompt = format_post_hint_prompt(
                         question = processed["question"],
                         model = model_name,
-                        hint=item.get("hint_sentence", ""),
+                        hint=item.get("hint_sentence"),
                         dataset_name=dataset_name,)
                     
                 else:
@@ -107,8 +97,7 @@ def solve_questions(
                 )
                 base_input_ids.append(list(ids))
 
-            
-
+        
 
             batch_size_actual = len(batch) # just for the case when last batch is smaller
             
@@ -275,7 +264,6 @@ def solve_questions(
                 # Keep only those still unresolved for the next attempt
                 pending_indices = [i for i in pending_indices if batch_results[i] is None]
 
-            # Fill in failures for items that never produced a valid answer
             # Fill in failures for items that never produced a valid answer
             for idx, res in enumerate(batch_results):
                 if res is None:
