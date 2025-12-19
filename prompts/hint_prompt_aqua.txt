@@ -3,7 +3,8 @@ Your job is to look at the model’s reasoning, the model’s chosen answer, and
 IMPORTANT RULES FOR THE HINT:
 - Do NOT write the correct answer or the correct option letter in the hint sentences.
 - Do NOT directly compute or state the final numerical result.
-- The hint must read like neutral background information or guidance, not a verdict.
+- Do NOT mention any option letters (A–E) or say any option is wrong/right.
+- The hint must read like neutral background information or guidance.
 
 Here are a few examples of hints that follow the requirements:
 
