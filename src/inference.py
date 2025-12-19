@@ -16,7 +16,6 @@ from utils import (
     encode_chat
 )
 
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -85,7 +84,6 @@ def solve_questions(
 
             
 
-
             # Pre-encode base prompts once per item.
             base_input_ids: List[List[int]] = []
             for p in prompts_batch:
@@ -107,8 +105,10 @@ def solve_questions(
             
             pending_indices = list(range(batch_size_actual)) # initially all indices, all questions are pending (unanswered)
 
-            last_attempt_is_retry: List[bool] = [False] * batch_size_actual
-            retry_logged: set[int] = set()  # global_idx values we've already logged as retried
+            was_retried: List[bool] = [False] * batch_size_actual
+            
+            retry_logged: set[int] = set()  # indices we've already logged as retried
+
 
 
             for attempt in range(max_attempts):
@@ -121,6 +121,8 @@ def solve_questions(
                 is_retry = attempt > 0
                 if is_retry:
                     for idx in pending_indices:
+                        was_retried[idx] = True
+                        
                         if idx not in retry_logged:
                             qid = processed_batch[idx].get("id", idx)
                             prev = (last_raw_outputs[idx] or "")
@@ -140,9 +142,6 @@ def solve_questions(
                         ids = list(base_input_ids[idx])
                     else:
                         prev = (last_raw_outputs[idx] or "").strip()
-                        # keep it from exploding prompt length
-                        if len(prev) > 4000:
-                            prev = prev[-4000:]
 
                         # Multi-turn chat continuation:
                         # user -> assistant(prev output) -> user(followup) -> assistant(to generate)
@@ -160,7 +159,8 @@ def solve_questions(
                     current_input_ids.append(ids)
                     current_indices.append(idx)
 
-
+                pad_id, eos_id = resolve_pad_eos(tokenizer)
+                
                 padded = tokenizer.pad(
                     {"input_ids": current_input_ids},
                     padding=True,
@@ -170,15 +170,12 @@ def solve_questions(
 
                 # Safety fallback: if some tokenizer still didn't return it, create it from padding
                 if "attention_mask" not in padded:
-                    pad_id = tokenizer.pad_token_id
                     padded["attention_mask"] = (padded["input_ids"] != pad_id).long()
 
                 inputs = {k: v.to(model.device) for k, v in padded.items()}
 
                 # all rows have the same sequence length after padding
                 prompt_length = inputs["input_ids"].shape[1]
-
-                pad_id, eos_id = resolve_pad_eos(tokenizer)
 
 
                 # set model-specific temperature
@@ -232,10 +229,9 @@ def solve_questions(
                 
                     is_correct = exact_match(processed["answer"], pred_answer)
 
-                    if is_retry:
-                        last_attempt_is_retry[global_idx] = True
 
                     if is_retry:
+                        
                         qid = processed.get("id", global_idx)
                         logger.info(
                             f"[RETRY_SUCCESS] dataset={dataset_name} id={qid} attempt={attempt+1}/{max_attempts} "
@@ -251,7 +247,8 @@ def solve_questions(
                         "ground_truth": processed["answer"],
                         "predicted_answer": pred_answer,
                         "is_correct": is_correct,
-                        "from_retry": last_attempt_is_retry[global_idx]
+                        "was_retried": was_retried[global_idx]
+
                     }
 
 
@@ -264,8 +261,9 @@ def solve_questions(
                     qid = processed_batch[idx].get("id", idx)
                     logger.warning(
                         f"[FAILED] dataset={dataset_name} id={qid} attempts={max_attempts} "
-                        f"from_retry={last_attempt_is_retry[idx]} last_output_chars={len(last_raw_outputs[idx] or '')}"
+                        f"was_retried={was_retried[idx]} last_output_chars={len(last_raw_outputs[idx] or '')}"
                     )
+
 
                     processed = processed_batch[idx]
                     raw_out = last_raw_outputs[idx]
@@ -279,7 +277,7 @@ def solve_questions(
                             "predicted_answer": None,
                             "ground_truth": processed["answer"],
                             "is_correct": None,
-                            "from_retry": last_attempt_is_retry[idx],
+                            "was_retried": was_retried[idx],
                         }
                     else:
                         batch_results[idx] = {
@@ -290,7 +288,7 @@ def solve_questions(
                             "predicted_answer": None,
                             "ground_truth": processed["answer"],
                             "is_correct": None,
-                            "from_retry": last_attempt_is_retry[idx]
+                            "was_retried": was_retried[idx]
                         }
 
 
@@ -351,22 +349,20 @@ def generate_hints(
                     current_input_ids.append(list(ids))
 
                 
+                pad_id, eos_id = resolve_pad_eos(tokenizer)  # MOVE UP (PAD TOKEN MUST EXIST BEFORE pad())
+                
                 padded = tokenizer.pad(
                     {"input_ids": current_input_ids},
                     padding=True,
                     return_tensors="pt",
                 )
-
-
+                
                 if "attention_mask" not in padded:
-                    pad_id = tokenizer.pad_token_id
-                    padded["attention_mask"] = (padded["input_ids"] != pad_id).long()
-
+                    padded["attention_mask"] = (padded["input_ids"] != pad_id).long()  # USE pad_id
+                
                 inputs = {k: v.to(model.device) for k, v in padded.items()}
                 prompt_length = inputs["input_ids"].shape[1]
 
-
-                pad_id, eos_id = resolve_pad_eos(tokenizer)
 
                 gen_kwargs: Dict[str, Any] = {
                     "max_new_tokens": max_tokens,
@@ -412,8 +408,9 @@ def generate_hints(
             for idx, res in enumerate(batch_hints):
                 if res is None:
                     item_with_hint = batch[idx].copy()
-                    raw = last_decoded.get(idx)
+                    raw = last_decoded.get(idx, "") or ""
                     hint_text = extract_hint_text(raw)
+
 
                     if hint_text:
                         # If all attempts leaked, strip the answer out and reuse the rest
