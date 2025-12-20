@@ -200,7 +200,7 @@ def solve_questions(
 
                 gen_kwargs: Dict[str, Any] = {
                     "max_new_tokens": max_tokens,
-                    #"min_new_tokens": min(64, max_tokens),
+                    "min_new_tokens": min(24, max_tokens),
                     "pad_token_id": pad_id,
                     "use_cache": True,
                     "do_sample": True,
@@ -327,7 +327,7 @@ def generate_hints(
     tokenizer,
     dataset_name: str,
     num_attempts: int = 3,
-    max_tokens: int = 2048,
+    max_tokens: int = 512,
     batch_size: int = 8
 ) -> List[Dict[str, Any]]:
     """
@@ -388,7 +388,7 @@ def generate_hints(
 
                 gen_kwargs: Dict[str, Any] = {
                     "max_new_tokens": max_tokens,
-                    #"min_new_tokens": min(64, max_tokens),
+                    "min_new_tokens": min(24, max_tokens),
                     "pad_token_id": pad_id,
                     "use_cache": True,
                     "do_sample": True,

@@ -32,7 +32,9 @@ def contains_bad_phrases(hint: str, answer: str, dataset_name: str) -> bool:
         "this is the right answer",
         "is the correct answer",
         "is the right answer",
-        "is plausible"
+        "final answer is",
+        "<ans>",
+        "boxed{"
     )
     if any(t in h for t in generic_triggers):
         return True
@@ -148,4 +150,3 @@ def extract_hint_text(output: str) -> str:
 
     # Fallback
     return output.strip()
-

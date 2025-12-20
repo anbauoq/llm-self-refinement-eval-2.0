@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# utils.py
+# generation.py
 from __future__ import annotations
 
 import torch

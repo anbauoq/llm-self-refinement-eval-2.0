@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# runner_utils.py - shared helpers for run.py + run_initial_inference.py
+# loading.py - shared helpers for run.py + run_initial_inference.py
 
 import importlib
 import logging

@@ -73,6 +73,7 @@ Correct answer: A
 Now write a new hint for this instance.
 
 Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no extra commentary and without leaking correct answer.
+Output MUST be exactly one <hint>...</hint> block.
 
 Question: {question}
 Reasoning: {chain_of_thought}
