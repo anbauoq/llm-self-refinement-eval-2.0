@@ -60,7 +60,6 @@ def format_initial_prompt(
     return body
 
 
-
 def format_post_hint_prompt(
     question: str,
     model: str,
@@ -68,10 +67,14 @@ def format_post_hint_prompt(
     dataset_name: str,
 ) -> str:
     """
-    Load and format the dataset-specific answer prompt with a hint placed
-    AFTER the final Question block.
-    """
+    For our prompt templates, the final line is always:
+        Question: {question}
 
+    So we just:
+      1) load template
+      2) format {question}
+      3) append the hint at the very end
+    """
     prompt_file_map = {
         "asdiv": "arithmetic_prompt.txt",
         "gsm8k": "arithmetic_prompt.txt",
@@ -80,25 +83,11 @@ def format_post_hint_prompt(
     prompt_path = Path("prompts") / prompt_filename
 
     template = prompt_path.read_text(encoding="utf-8")
-    body = template.format(question=question.strip())
+    body = template.format(question=question.strip()).rstrip()
 
-    # Inject hint after the final Question: block.
-    hint_text = hint.strip()
+    hint_text = (hint or "").strip()
+    combined = f"{body}\n\nHint: {hint_text}\n"
 
-    q_idx = body.rfind("Question:")
-    if q_idx == -1:
-        # Fallback: if the template doesn't contain "Question:", just append.
-        combined = f"{body.rstrip()}\n\nHint: {hint_text}\n"
-    else:
-
-        think_idx = body.find("<think", q_idx)
-        insert_at = think_idx if think_idx != -1 else len(body)
-
-        before = body[:insert_at].rstrip()
-        after = body[insert_at:]
-        combined = f"{before}\n\nHint: {hint_text}\n\n{after}"
-
-    # --- model-specific formatting ---
     if model in (
         "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
         "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
@@ -109,7 +98,6 @@ def format_post_hint_prompt(
         combined = answers_reformatting(combined)
 
     return combined
-
 
 
 def format_hint_prompt(

@@ -26,13 +26,13 @@ def contains_bad_phrases(hint: str, answer: str, dataset_name: str) -> bool:
     h = (hint or "").lower()
     a = answer
 
-    # Generic "this is the answer" phrases (bad everywhere, even without seeing `a`)
     generic_triggers = (
         "the correct answer",
         "this is the correct answer",
         "this is the right answer",
         "is the correct answer",
         "is the right answer",
+        "is plausible"
     )
     if any(t in h for t in generic_triggers):
         return True
@@ -131,15 +131,6 @@ def strip_answer_from_hint(hint: str, answer: str) -> str:
     return h
 
 def extract_hint_text(output: str) -> str:
-    """
-    Extract inner text from <hint>...</hint> or <hints>...</hints> blocks.
-
-    - If such a block exists, return the inner text of the *last* one.
-    - Accepts both <hint> and <hints> (case-insensitive), multiline.
-    - If no paired block exists but a closing tag like </hint> or </hints> appears
-      (even without an opening tag), return everything *before* the first closing tag.
-    - If neither exists, return the full output stripped.
-    """
 
     # Proper paired tags
     matches = re.findall(
