@@ -1,4 +1,4 @@
-# LLM Self-Refinement Capabilities Evaluation
+# Do LLMs Know What/Where and Why They Lack?
 
 This project provides a comprehensive framework to evaluate the self-refinement capabilities of Large Language Models (LLMs). The core experiment tests whether an LLM can identify its own reasoning errors and generate effective, corrective hints to improve its performance on a second attempt.
 
@@ -40,7 +40,7 @@ python src/run.py \
   --model_path "Qwen/Qwen2.5-Math-1.5B" \
   --dataset "gsm8k" \
   --input_path "data/gsm8k.jsonl" \
-  --output_dir "results/Qwen-Math-1.5B/gsm8k/max512" \
+  --output_dir "results/Qwen-Math-1.5B/gsm8k" \
   --max_tokens 1024
 ```
 
