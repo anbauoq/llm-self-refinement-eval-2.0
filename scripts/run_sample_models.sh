@@ -5,8 +5,9 @@ MODELS_NON_REASONING=(
   "google/gemma-2-2b-it"
   "meta-llama/Meta-Llama-3.1-8B-Instruct"
   "microsoft/Phi-4-mini-instruct"
-  "Qwen/Qwen2.5-Math-1.5B"
-  "Qwen/Qwen2.5-Math-7B"
+  "Qwen/Qwen2.5-Math-1.5B-Instruct"
+  "Qwen/Qwen2.5-Math-7B-Instruct"
+  
 )
 
 MODELS_REASONING=(

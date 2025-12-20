@@ -96,6 +96,6 @@ E) G, H, J, K
 <ans>B</ans>
 
 ----
-Now answer this single question. Strictly follow the output requirements. Do NOT output anything else after stating the final answer to this question.
+Answer the following single question and return only the correct option letter (A–E). Do NOT output anything else after stating the final answer to this question.
 
 Question: {question}

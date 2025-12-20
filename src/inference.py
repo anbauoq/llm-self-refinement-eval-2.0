@@ -40,7 +40,7 @@ def solve_questions(
     with torch.inference_mode(): 
         
         followup_user_msg = (
-            "Explicitly write your reasoning on how to solve this problem inside <think> </think> and state the final answer isnide <ans>...</ans>. You MUST end your response with the final answer!"
+            "Now return ONLY the final answer inside <ans> </ans>."
         )
 
         if model_name in (
@@ -111,6 +111,9 @@ def solve_questions(
             batch_results: List[Optional[Dict[str, Any]]] = [None] * batch_size_actual # keeping status weather pred_answer succesfully extracted or no, initially oll are not so None
 
             last_raw_outputs: List[Optional[str]] = [None] * batch_size_actual # storing all outputs so in case of failure the full output is available
+
+            attempt_outputs: List[List[str]] = [[] for _ in range(batch_size_actual)]  # all attempts' decoded outputs per item (in order)
+
             
             pending_indices = list(range(batch_size_actual)) # initially all indices, all questions are pending (unanswered)
 
@@ -222,6 +225,9 @@ def solve_questions(
                     ).strip()
                                     
                     last_raw_outputs[global_idx] = trimmed_decoded
+
+                    attempt_outputs[global_idx].append(trimmed_decoded)
+
                                     
                     cot = extract_cot(trimmed_decoded)
                     options = processed.get("options", [])
@@ -248,11 +254,18 @@ def solve_questions(
                         )
 
 
+                    merged_full_output = (
+                        "\n\n".join(attempt_outputs[global_idx])
+                        if was_retried[global_idx] and len(attempt_outputs[global_idx]) > 1
+                        else trimmed_decoded
+                    )
+
+
                     batch_results[global_idx] = {
                         "id": processed["id"],
                         "question": processed["question"],
                         "chain_of_thought": cot,
-                        "full_output": trimmed_decoded,
+                        "full_output": merged_full_output,
                         "ground_truth": processed["answer"],
                         "predicted_answer": pred_answer,
                         "is_correct": is_correct,

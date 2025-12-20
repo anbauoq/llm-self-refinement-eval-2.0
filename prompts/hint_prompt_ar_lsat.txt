@@ -75,6 +75,6 @@ Now write a new hint for this instance.
 Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no extra commentary and without leaking correct answer.
 
 Question: {question}
-Your reasoning: {chain_of_thought}
-Your answer: {predicted_answer}
+Reasoning: {chain_of_thought}
+Answer: {predicted_answer}
 Correct answer: {correct_answer}

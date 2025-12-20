@@ -5,8 +5,8 @@ source ~/miniforge3/etc/profile.d/conda.sh
 conda activate self_play
 
 MODELS_NON_REASONING=(
-  "Qwen/Qwen2.5-Math-1.5B"
-  "Qwen/Qwen2.5-Math-7B"
+  "Qwen/Qwen2.5-Math-1.5B-instruct"
+  "Qwen/Qwen2.5-Math-7B-instruct"
   "microsoft/Phi-4-mini-instruct"
   "google/gemma-2-2b-it"
   "meta-llama/Meta-Llama-3.1-8B-Instruct"
