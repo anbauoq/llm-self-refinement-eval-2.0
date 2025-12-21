@@ -90,6 +90,6 @@ E)195
 <ans>C</ans>
 
 ----
-Answer the following single question and return only the correct option letter (A–E). Do NOT output anything else after stating the final answer to this question.
+Answer the following single question. On the last line return only the correct option letter (A–E). Do NOT output anything else after stating the final answer to this question.
 
 Question: {question}
