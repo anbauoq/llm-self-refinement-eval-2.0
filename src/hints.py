@@ -88,6 +88,16 @@ def contains_bad_phrases(hint: str, answer: str, dataset_name: str) -> bool:
             rf"the answer is\s*[:\-]?\s*{re.escape(a)}",
             rf"correct answer\s*[:\-]?\s*{re.escape(a)}",
             rf"answer\s*(is|=)\s*{re.escape(a)}",
+
+            r"\b(sentence|statement|claim|text|it|this|that)\s+(is|was|seems|appears|would be|must be)\s+(im)?plausible\b",
+            r"\b(sentence|statement|claim|text)\s+(is|was|seems|appears)\s+not\s+plausible\b",
+            r"\b(not|never)\s+plausible\b",
+            r"\b(isn'?t|wasn'?t|aren'?t|weren'?t)\s+plausible\b",
+            r"\b(im)?plausible\s+(sentence|statement|claim|text)\b",
+            r"\b(verdict|label|classification|class)\s*[:=\-]\s*(im)?plausible\b",
+            r"\bthis\s+(is|was)\s+(im)?plausible\b",
+            r"\btherefore\s*,?\s*(im)?plausible\b",
+            r"\b(conclusion|overall)\s*[:=\-]\s*(im)?plausible\b",
         ]
         for pat in patterns:
             if re.search(pat, h):

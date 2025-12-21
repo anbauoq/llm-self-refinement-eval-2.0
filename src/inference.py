@@ -40,7 +40,7 @@ def solve_questions(
     with torch.inference_mode(): 
         
         followup_user_msg = (
-            "Now return ONLY the final answer inside <ans> </ans>."
+            "Now return ONLY single final answer to the question inside <ans> </ans>."
         )
 
         if model_name in (
@@ -357,9 +357,26 @@ def generate_hints(
             pending_indices = list(range(batch_size_actual))
             last_decoded: Dict[int, str] = {}
 
+            was_retried: List[bool] = [False] * batch_size_actual
+            retry_logged: set[int] = set()
+
             for attempt in range(num_attempts):
                 if not pending_indices:
                     break
+
+                is_retry = attempt > 0
+                if is_retry:
+                    for idx in pending_indices:
+                        was_retried[idx] = True
+                        if idx not in retry_logged:
+                            qid = batch[idx].get("id", idx)  
+                            prev = (last_decoded.get(idx, "") or "") 
+                            logger.info( 
+                                f"[RETRY] dataset={dataset_name} id={qid} attempt={attempt+1}/{num_attempts} "
+                                f"reason=no_valid_hint_extracted prev_chars={len(prev)} "
+                                f"action=regenerate_hint"
+                            )
+                            retry_logged.add(idx)
 
                 current_input_ids: List[List[int]] = []
                 for i in pending_indices:
@@ -371,7 +388,7 @@ def generate_hints(
                     current_input_ids.append(list(ids))
 
                 
-                pad_id, eos_id = resolve_pad_eos(tokenizer)  # MOVE UP (PAD TOKEN MUST EXIST BEFORE pad())
+                pad_id, eos_id = resolve_pad_eos(tokenizer)
                 
                 padded = tokenizer.pad(
                     {"input_ids": current_input_ids},
@@ -423,12 +440,25 @@ def generate_hints(
                         item_with_hint["hint_sentence"] = hint_text
                         batch_hints[global_idx] = item_with_hint
 
+                        if is_retry:
+                            qid = item.get("id", global_idx)
+                            logger.info(
+                                f"[RETRY_SUCCESS] dataset={dataset_name} id={qid} attempt={attempt+1}/{num_attempts} "
+                                f"hint_chars={len(hint_text)}"
+                            )
+
                 # Filter out those that already have a valid hint
                 pending_indices = [i for i in pending_indices if batch_hints[i] is None]
 
             # Add items with last attempt's hint if validation failed
             for idx, res in enumerate(batch_hints):
                 if res is None:
+                    qid = batch[idx].get("id", idx)
+                    logger.warning(
+                        f"[FAILED] dataset={dataset_name} id={qid} attempts={num_attempts} "
+                        f"was_retried={was_retried[idx]} last_output_chars={len(last_decoded.get(idx, '') or '')}"
+                    )
+
                     item_with_hint = batch[idx].copy()
                     raw = last_decoded.get(idx, "") or ""
                     hint_text = extract_hint_text(raw)
