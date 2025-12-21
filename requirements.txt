@@ -1,4 +1,4 @@
 torch>=1.13.0
-transformers==4.51.0
+transformers==4.57.3
 accelerate>=0.20.0
 safetensors>=0.4.5
