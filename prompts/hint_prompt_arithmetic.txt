@@ -44,11 +44,11 @@ Correct answer: 138
 
 ----
 
-Now, based on the question, your reasoning, your answer, and the correct answer, write a new hint.
-
-Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no extra commentary and without leaking correct answer.
+Now, based on the question, reasoning, predicted answer, and the correct answer, write a new hint.
 
 Question: {question}
-Your reasoning: {chain_of_thought}
-Your answer: {predicted_answer}
+Reasoning: {chain_of_thought}
+Predicted incorrect answer: {predicted_answer}
 Correct answer: {correct_answer}
+
+Return ONLY 1–3 hint sentences, wrapped inside a single <hint>...</hint> block, with no extra commentary and WITHOUT stating correct answer. Do NOT try to solve the problem.

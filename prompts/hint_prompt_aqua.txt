@@ -71,12 +71,11 @@ Correct answer: E
 
 ----
 
-Now, based on your reasoning, your answer, and the correct answer, write a hint to this question.
-
-Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no extra commentary and without leaking correct answer.
-Output MUST be exactly one <hint>...</hint> block.
+Now, based on the reasoning, answer, and the correct answer, write a hint to this question.
 
 Question: {question}
-Your reasoning: {chain_of_thought}
-Your answer: {predicted_answer}
+Reasoning: {chain_of_thought}
+Predicted incorrect answer: {predicted_answer}
 Correct answer: {correct_answer}
+
+Return ONLY 1–3 hint sentences, wrapped inside a single <hint>...</hint> block, with no extra commentary and WITHOUT stating correct answer. Do NOT state the correct option letter.

@@ -1,10 +1,18 @@
-Your job is to look at the model’s reasoning, the model’s chosen answer, and the correct answer, then write a short HINT that would have helped the model arrive at the correct option if that hint had been included in the original question.
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import re
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM
+
+MODEL_ID = "Qwen/Qwen2.5-Math-1.5B-Instruct"
+
+PROMPT = r"""Your job is to look at the model’s reasoning, the model’s chosen answer, and the correct answer, then write a short HINT that would have helped the model arrive at the correct option if that hint had been included in the original question.
 
 IMPORTANT RULES FOR THE HINT:
 - Do NOT include the correct answer, the correct option letter, or any wording that points to one unique option.
 - Do NOT mention any option letters (A–E) or say any option is wrong/right.
 - The hint must read like neutral background information or guidance, not a verdict.
-
 Here are a few examples of hints that follow the requirements:
 
 Example 1:
@@ -70,11 +78,58 @@ Correct answer: A
 
 ----
 
-Now, based on the reasoning, answer, and the correct answer, write a hint to this question.
+Write a new hint for this instance.
 
-Question: {question}
-Reasoning: {chain_of_thought}
-Predicted incorrect answer: {predicted_answer}
-Correct answer: {correct_answer}
+Question: Of the eight students—George, Helen, Irving, Kyle, Lenore, Nina, Olivia, and Robert—in a seminar, exactly six will give individual oral reports during three consecutive days—Monday, Tuesday, and Wednesday. Exactly two reports will be given each day—one in the morning and one in the afternoon—according to the following conditions: Tuesday is the only day on which George can give a report. Neither Olivia nor Robert can give an afternoon report. If Nina gives a report, then on the next day Helen and Irving must both give reports, unless Nina's report is given on Wednesday.\n\nWhich one of the following could be the schedule of the students' reports?\nA) Mon. morning: Helen; Mon. afternoon: Robert Tues. morning: Olivia; Tues. afternoon: Irving Wed. morning: Lenore; Wed. afternoon: Kyle\nB) Mon. morning: Irving; Mon. afternoon: Olivia Tues. morning: Helen; Tues. afternoon: Kyle Wed. morning: Nina; Wed. afternoon: Lenore\nC) Mon. morning: Lenore; Mon. afternoon: Helen Tues. morning: George; Tues. afternoon: Kyle Wed. morning: Robert; Wed. afternoon: Irving\nD) Mon. morning: Nina; Mon. afternoon: Helen Tues. morning: Robert; Tues. afternoon: Irving Wed. morning: Olivia; Wed. afternoon: Lenore\nE) Mon. morning: Olivia; Mon. afternoon: Nina Tues. morning: Irving; Tues. afternoon: Helen Wed. morning: Kyle; Wed. afternoon: George
 
-Return ONLY 1–3 hint sentences, wrapped inside a single <hint>...</hint> block, with no extra commentary and WITHOUT stating correct answer. Do NOT state the correct option letter.
+Reasoning: The final answer is \\boxed{B}.  \nThis is the schedule of the students' reports that satisfies all the given conditions.
+
+Predicted incorrect answer: B
+Correct answer: C
+
+Return ONLY 1–3 VERY SHORT hint sentences, wrapped inside a single <hint>...</hint> block, with no extra commentary and WITHOUT stating correct answer. Do NOT try to answer the questions.
+
+"""
+
+def extract_first_hint_block(text: str) -> str | None:
+    m = re.search(r"<hint>.*?</hint>", text, flags=re.DOTALL | re.IGNORECASE)
+    return m.group(0).strip() if m else None
+
+def main() -> None:
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, use_fast=True)
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL_ID,
+        dtype="auto",
+        device_map="auto",
+    )
+    model.eval()
+
+    messages = [{"role": "user", "content": PROMPT}]
+    chat_text = tokenizer.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=True,
+    )
+
+    inputs = tokenizer(chat_text, return_tensors="pt").to(model.device)
+    input_len = inputs["input_ids"].shape[1]
+
+    with torch.no_grad():
+        out_ids = model.generate(
+            **inputs,
+            do_sample=True,
+            temperature=0.6,
+            top_p=0.95,
+            max_new_tokens=256,
+            pad_token_id=tokenizer.eos_token_id,
+            eos_token_id=tokenizer.eos_token_id,
+        )
+
+    gen_ids = out_ids[0][input_len:]
+    gen_text = tokenizer.decode(gen_ids, skip_special_tokens=True).strip()
+
+    hint = extract_first_hint_block(gen_text)
+    print(hint if hint else gen_text)
+
+if __name__ == "__main__":
+    main()
