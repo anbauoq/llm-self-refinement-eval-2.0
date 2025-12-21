@@ -51,7 +51,7 @@ E)(zy – x)/(z + 2)
 <ans>D</ans>
 
 Example 4:
-Question: Find the total no. of distinct bike no.'s that can beformed using 2 letters followed by 2 no.'s. How many letters need to be distinct?
+Question: Find the total no. of distinct bike no.'s that can be formed using 2 letters followed by 2 no.'s. How many letters need to be distinct?
 
 Options:
 A)65000
