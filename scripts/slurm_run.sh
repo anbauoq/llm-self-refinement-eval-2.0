@@ -68,10 +68,6 @@ export PIP_CACHE_DIR=/lustre/fsw/llmservice_nemo_reasoning/earakelyan/.cache/pip
 export HF_HOME=/lustre/fsw/llmservice_nemo_reasoning/earakelyan/.cache/huggingface
 export TRANSFORMERS_CACHE=/lustre/fsw/llmservice_nemo_reasoning/earakelyan/.cache/huggingface
 
-# Enable optimized inference (batching, FlashAttention, bfloat16)
-# Set to "false" to use standard inference
-export USE_OPTIMIZED="${USE_OPTIMIZED:-true}"
-
 echo "Job started at $(date)"
 echo "Python: $(which python)"
 echo "Python version: $(python --version)"
@@ -79,7 +75,6 @@ echo "Running on node: $(hostname)"
 echo "Job ID: $SLURM_JOB_ID"
 echo "Cache directories:"
 echo "  HF_HOME: $HF_HOME"
-echo "Inference mode: $([ "$USE_OPTIMIZED" = "true" ] && echo "OPTIMIZED (batched, bfloat16)" || echo "STANDARD")"
 echo ""
 
 # Change to project directory

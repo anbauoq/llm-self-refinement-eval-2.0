@@ -88,41 +88,25 @@ while true; do
     # Create output directory
     mkdir -p "$OUTPUT_PATH"
     
-    # Determine which script to use
-    if [ "${USE_OPTIMIZED:-false}" = "true" ]; then
-        RUN_SCRIPT="src/run_optimized.py"
-        
-        # Auto-adjust batch size based on model name
-        if [[ "$MODEL" =~ "1.5B"|"2B" ]]; then
-            BATCH_SIZE=128
-        elif [[ "$MODEL" =~ "7B"|"8B" ]]; then
-            BATCH_SIZE=128
-        else
-            BATCH_SIZE=128
-        fi
-        
-        echo "Using OPTIMIZED inference (batch_size=$BATCH_SIZE)"
-        
-        # Run optimized version
-        CUDA_VISIBLE_DEVICES=$GPU_ID python $RUN_SCRIPT \
-            --model_path "$MODEL" \
-            --dataset "$DATASET" \
-            --input_path "data/${DATASET}.jsonl" \
-            --output_dir "$OUTPUT_PATH" \
-            --max_tokens "$TOKENS" \
-            --batch_size "$BATCH_SIZE"
+    # Auto-adjust batch size based on model name
+    if [[ "$MODEL" =~ "1.5B"|"2B" ]]; then
+        BATCH_SIZE=128
+    elif [[ "$MODEL" =~ "7B"|"8B" ]]; then
+        BATCH_SIZE=128
     else
-        RUN_SCRIPT="src/run.py"
-        echo "Using STANDARD inference"
-        
-        # Run standard version
-        CUDA_VISIBLE_DEVICES=$GPU_ID python $RUN_SCRIPT \
-            --model_path "$MODEL" \
-            --dataset "$DATASET" \
-            --input_path "data/${DATASET}.jsonl" \
-            --output_dir "$OUTPUT_PATH" \
-            --max_tokens "$TOKENS"
+        BATCH_SIZE=128
     fi
+    
+    echo "Running inference (batch_size=$BATCH_SIZE)"
+    
+    # Run inference
+    CUDA_VISIBLE_DEVICES=$GPU_ID python src/run.py \
+        --model_path "$MODEL" \
+        --dataset "$DATASET" \
+        --input_path "data/${DATASET}.jsonl" \
+        --output_dir "$OUTPUT_PATH" \
+        --max_tokens "$TOKENS" \
+        --batch_size "$BATCH_SIZE"
     
     EXIT_CODE=$?
     

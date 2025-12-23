@@ -10,15 +10,15 @@ from huggingface_hub import login, snapshot_download
 from tqdm import tqdm
 
 # Hugging Face token
-HF_TOKEN = "MSK"
+HF_TOKEN = os.environ.get('HF_TOKEN')
 
 # All models used in the project
 MODELS_NON_REASONING = [
     "google/gemma-2-2b-it",
     "meta-llama/Meta-Llama-3.1-8B-Instruct",
     "microsoft/Phi-4-mini-instruct",
-    "Qwen/Qwen2.5-Math-1.5B",
-    "Qwen/Qwen2.5-Math-7B",
+    "Qwen/Qwen2.5-Math-1.5B-instruct",
+    "Qwen/Qwen2.5-Math-7B-instruct",
 ]
 
 MODELS_REASONING = [
