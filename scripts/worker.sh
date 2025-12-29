@@ -90,11 +90,11 @@ while true; do
     
     # Auto-adjust batch size based on model name
     if [[ "$MODEL" =~ "1.5B"|"2B" ]]; then
-        BATCH_SIZE=128
+        BATCH_SIZE=32
     elif [[ "$MODEL" =~ "7B"|"8B" ]]; then
-        BATCH_SIZE=128
+        BATCH_SIZE=32
     else
-        BATCH_SIZE=128
+        BATCH_SIZE=32
     fi
     
     echo "Running inference (batch_size=$BATCH_SIZE)"
