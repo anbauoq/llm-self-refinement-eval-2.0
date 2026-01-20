@@ -75,8 +75,9 @@ class RunStats:
     n_incorrect_answer: int
     n_corrected_answer: int
 
-    # IMPORTANT: this is "corrected among initially wrong" / "initially wrong"
-    posthint_accuracy: float
+    posthint_accuracy: float          # (init correct + corrected) / total
+    correction_rate: float            # corrected / initially wrong
+    delta_accuracy: float             # posthint_accuracy - initial_accuracy
 
 
 def analyze_one_run(run_dir: Path) -> Optional[RunStats]:
@@ -93,70 +94,61 @@ def analyze_one_run(run_dir: Path) -> Optional[RunStats]:
 
     n_total = len(initial)
     n_init_correct = count_correct(initial)
-    n_wrong = n_total - n_init_correct  # denominator you want
+    n_wrong = n_total - n_init_correct
 
-    # If nothing was re-answered post-hint, no corrections
     if not post or n_wrong == 0:
         n_corrected = 0
-        posthint_acc = safe_ratio(n_corrected, n_wrong)  # 0 if n_wrong==0
+        posthint_acc = safe_ratio(n_init_correct, n_total)
+        initial_acc = safe_ratio(n_init_correct, n_total)
+        correction_rate = 0.0
+        delta = posthint_acc - initial_acc
+
         return RunStats(
             model, dataset, max_tokes,
             n_total, n_init_correct, n_wrong,
-            n_corrected, posthint_acc
+            n_corrected, posthint_acc, correction_rate, delta
         )
 
     init_by_id = index_by_id(initial)
     post_by_id = index_by_id(post)
-
     have_ids = (len(init_by_id) == n_total) and (len(post_by_id) == len(post))
 
     if have_ids:
         post_ids = set(post_by_id.keys())
 
-        # Case A: post file contains ONLY initially wrong examples (common)
-        # -> corrected = # correct in post
         if len(post_ids) <= n_wrong:
-            n_corrected = sum(1 for pid in post_ids if post_by_id[pid].get("is_correct", False))
+            n_corrected = sum(
+                1 for pid in post_ids
+                if post_by_id[pid].get("is_correct", False)
+            )
 
-        # Case B: post file contains ALL examples
-        # -> corrected = # flips from wrong to correct
         elif len(post_ids) == n_total:
             n_corrected = 0
             for pid in post_ids:
-                init_ok = init_by_id[pid].get("is_correct", False)
-                post_ok = post_by_id[pid].get("is_correct", False)
-                if (not init_ok) and post_ok:
+                if (not init_by_id[pid].get("is_correct", False)) and post_by_id[pid].get("is_correct", False):
                     n_corrected += 1
-
-        # Case C: mismatch/partial: count corrected on overlap (best effort)
         else:
             intersect = post_ids & set(init_by_id.keys())
-            n_corrected = sum(1 for pid in intersect if post_by_id[pid].get("is_correct", False))
-
+            n_corrected = sum(
+                1 for pid in intersect
+                if (not init_by_id[pid].get("is_correct", False)) and post_by_id[pid].get("is_correct", False)
+            )
     else:
-        # No reliable IDs: use length heuristic / best effort
-        # If post length equals #wrong, assume it's the re-answers for wrongs
-        if len(post) == n_wrong:
-            n_corrected = count_correct(post)
-        else:
-            # best effort: still count how many post answers are correct
-            n_corrected = count_correct(post)
+        n_corrected = count_correct(post) if len(post) == n_wrong else count_correct(post)
 
-    # YOUR definition: corrected / initially_wrong
-    posthint_acc = safe_ratio(n_corrected, n_wrong)
+    initial_acc = safe_ratio(n_init_correct, n_total)
+    posthint_acc = safe_ratio(n_init_correct + n_corrected, n_total)
+    correction_rate = safe_ratio(n_corrected, n_wrong)
+    delta = posthint_acc - initial_acc
 
     return RunStats(
         model, dataset, max_tokes,
         n_total, n_init_correct, n_wrong,
-        n_corrected, posthint_acc
+        n_corrected, posthint_acc, correction_rate, delta
     )
 
 
 def aggregate_rows(rows: List[RunStats]) -> List[RunStats]:
-    """
-    If you have multiple runs for the same (model,dataset,max_tokes),
-    aggregate counts and recompute ratios (weighted correctly).
-    """
     grouped: Dict[Tuple[str, str, str], List[RunStats]] = {}
     for r in rows:
         grouped.setdefault((r.model, r.dataset, r.max_tokes), []).append(r)
@@ -167,12 +159,16 @@ def aggregate_rows(rows: List[RunStats]) -> List[RunStats]:
         n_init_correct = sum(x.n_init_correct for x in rs)
         n_wrong = sum(x.n_incorrect_answer for x in rs)
         n_corrected = sum(x.n_corrected_answer for x in rs)
-        posthint_acc = safe_ratio(n_corrected, n_wrong)
+
+        initial_acc = safe_ratio(n_init_correct, n_total)
+        posthint_acc = safe_ratio(n_init_correct + n_corrected, n_total)
+        correction_rate = safe_ratio(n_corrected, n_wrong)
+        delta = posthint_acc - initial_acc
 
         out.append(RunStats(
             m, d, t,
             n_total, n_init_correct, n_wrong,
-            n_corrected, posthint_acc
+            n_corrected, posthint_acc, correction_rate, delta
         ))
 
     out.sort(key=lambda r: (r.dataset, r.model, int(r.max_tokes) if r.max_tokes.isdigit() else 0))
@@ -199,7 +195,6 @@ def main() -> None:
     if args.aggregate:
         stats = aggregate_rows(stats)
 
-    # EXACT columns you showed
     fieldnames = [
         "model",
         "dataset",
@@ -208,6 +203,8 @@ def main() -> None:
         "n_incorrect_answer",
         "n_corrected_answer",
         "posthint_accuracy",
+        "correction_rate",
+        "delta_accuracy",
     ]
 
     out_csv = Path(args.out_csv)
@@ -226,6 +223,8 @@ def main() -> None:
                 "n_incorrect_answer": str(r.n_incorrect_answer),
                 "n_corrected_answer": str(r.n_corrected_answer),
                 "posthint_accuracy": f"{r.posthint_accuracy:.6f}",
+                "correction_rate": f"{r.correction_rate:.6f}",
+                "delta_accuracy": f"{r.delta_accuracy:.6f}",
             })
 
     print(f"Saved: {out_csv}")
