@@ -16,7 +16,6 @@ MODELS_NON_REASONING = {
     "gemma-2-2b-it",
     "Meta-Llama-3.1-8B-Instruct",
     "Phi-4-mini-instruct",
-    # NOTE: folder names in your tree are "Qwen2.5-Math-1.5B-instruct" etc
     "Qwen2.5-Math-1.5B-instruct",
     "Qwen2.5-Math-7B-instruct",
 }
@@ -88,12 +87,17 @@ def load_ok_and_outputs(path):
     return ok_map, out_map, n_total, n_correct
 
 
-# ---------------- per-question df (hints-only) ----------------
+# ---------------- per-question df (ALL QUESTIONS; nulls only if initially correct) ----------------
 
 def build_per_question_df(results_root):
     """
-    One row = one hint (usually one per initially-incorrect question).
-    This is useful for hint-length analysis.
+    One row = one QUESTION (ALL questions from initial_inference.jsonl).
+
+    IMPORTANT RULE (your request):
+      - If initially correct (initial_correct == 1): set NULL for all hint/post-hint fields
+      - If initially incorrect (initial_correct == 0): DO NOT null-out; we try to fill hint/post-hint fields.
+        If hint text is missing for some initially-incorrect questions (data issue), hint_* fields will be NULL,
+        but post_* fields will still be filled from post_hint_inference.jsonl.
 
     Columns:
       model, model_category, dataset, max_tokens,
@@ -140,35 +144,63 @@ def build_per_question_df(results_root):
                 init_ok, init_out, _, _ = load_ok_and_outputs(init_p)
                 post_ok, post_out, _, _ = load_ok_and_outputs(post_p)
 
-                hint_ids = []
-                hint_texts = []
+                # hint_sentence per qid (only exists for some questions)
+                hint_text_by_id = {}
                 for obj in iter_jsonl(hints_p):
                     qid = str(obj["id"])
-                    hint_ids.append(qid)
-                    hint_texts.append(obj["hint_sentence"])
+                    hint_text_by_id[qid] = obj.get("hint_sentence", "")
 
-                hint_lens = tokenize_lengths(hint_texts, tok)
-                init_lens = tokenize_lengths([init_out.get(q, "") for q in hint_ids], tok)
-                post_lens = tokenize_lengths([post_out.get(q, "") for q in hint_ids], tok)
+                # Precompute token lengths for ALL initial outputs (one per qid)
+                all_qids = list(init_ok.keys())
+                init_lens_all = tokenize_lengths([init_out.get(q, "") for q in all_qids], tok)
 
-                for qid, hlen, ilen, plen in zip(hint_ids, hint_lens, init_lens, post_lens):
+                # For post-hint: we want lengths for ALL questions too (even if later nulled for initially-correct)
+                post_lens_all = tokenize_lengths([post_out.get(q, "") for q in all_qids], tok)
+
+                # Compute hint token length only for those with hint_sentence present
+                hint_tokens_by_id = {}
+                if hint_text_by_id:
+                    hint_ids = list(hint_text_by_id.keys())
+                    hint_lens = tokenize_lengths([hint_text_by_id[q] for q in hint_ids], tok)
+                    hint_tokens_by_id = dict(zip(hint_ids, map(int, hint_lens)))
+
+                for qid, ilen, plen in zip(all_qids, init_lens_all, post_lens_all):
                     was_init = bool(init_ok.get(qid, False))
-                    was_post = bool(post_ok.get(qid, False))
-                    corrected = (not was_init) and was_post
 
-                    rows.append({
-                        "model": model,
-                        "model_category": model_category,
-                        "dataset": dataset,
-                        "max_tokens": max_tokens,
-                        "corrected": int(corrected),
-                        "hint_tokens": int(hlen),
-                        "hint_outcome": "Corrected" if corrected else "Not corrected",
-                        "initial_inference_tokens": int(ilen),
-                        "post_hint_inference_tokens": int(plen),
-                        "initial_correct": int(was_init),
-                        "post_correct": int(was_post),
-                    })
+                    if was_init:
+                        # initially correct -> NULL hint/post-hint related fields (your requested rule)
+                        rows.append({
+                            "model": model,
+                            "model_category": model_category,
+                            "dataset": dataset,
+                            "max_tokens": max_tokens,
+                            "corrected": None,
+                            "hint_tokens": None,
+                            "hint_outcome": None,
+                            "initial_inference_tokens": int(ilen),
+                            "post_hint_inference_tokens": None,
+                            "initial_correct": 1,
+                            "post_correct": None,
+                        })
+                    else:
+                        # initially incorrect -> fill post-hint fields (always), hint fields if available
+                        was_post = bool(post_ok.get(qid, False))
+                        corrected = (not was_init) and was_post
+
+                        hlen = hint_tokens_by_id.get(qid, None)
+                        rows.append({
+                            "model": model,
+                            "model_category": model_category,
+                            "dataset": dataset,
+                            "max_tokens": max_tokens,
+                            "corrected": int(corrected),
+                            "hint_tokens": int(hlen) if hlen is not None else None,
+                            "hint_outcome": ("Corrected" if corrected else "Not corrected") if hlen is not None else None,
+                            "initial_inference_tokens": int(ilen),
+                            "post_hint_inference_tokens": int(plen),
+                            "initial_correct": 0,
+                            "post_correct": int(was_post),
+                        })
 
     df = pd.DataFrame(rows)
     df = df[df["model_category"].isin(["Reasoning", "Non-Reasoning"])].copy()
@@ -185,7 +217,7 @@ def build_metrics_all_questions(results_root):
       - n_questions from initial_inference.jsonl (total lines)
       - initial_accuracy = n_correct_init / n_questions
       - n_corrected = count of (init incorrect AND post correct)
-      - post_hint_accuracy = (n_correct_init + n_corrected) / n_questions   <-- your requested definition
+      - post_hint_accuracy = (n_correct_init + n_corrected) / n_questions
       - correction_rate = n_corrected / n_incorrect_initial
       - token means computed over ALL full_output in each file
     """
@@ -279,11 +311,11 @@ def build_metrics_all_questions(results_root):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--results_root", type=str, default=RESULTS_ROOT)
-    parser.add_argument("--per_question_out", type=str, default="per_question_tokens.csv")
-    parser.add_argument("--metrics_out", type=str, default="metrics.csv")
+    parser.add_argument("--per_question_out", type=str, default="evaluation/outputs/per_question_tokens.csv")
+    parser.add_argument("--metrics_out", type=str, default="evaluation/outputs/metrics.csv")
     args = parser.parse_args()
 
-    print("Building per-question dataframe (hints-only)...")
+    print("Building per-question dataframe (ALL questions; nulls only for initially correct)...")
     df_questions = build_per_question_df(args.results_root)
     df_questions.to_csv(args.per_question_out, index=False)
     print(f"Saved {args.per_question_out} (rows={len(df_questions)})")

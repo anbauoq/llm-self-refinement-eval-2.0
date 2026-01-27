@@ -482,3 +482,26 @@ def plot_tokens_boxplot(
     plt.grid(True, alpha=0.3, axis="y")
     plt.tight_layout()
     plt.show()
+
+def plot_token_stage_boxplot(per_question_tokens, title="Token Usage Across Generation Stages", show_fliers=False):
+
+    data = [
+        per_question_tokens["initial_inference_tokens"],
+        per_question_tokens["hint_tokens"],
+        per_question_tokens["post_hint_inference_tokens"]
+    ]
+
+    labels = [
+        "Initial inference",
+        "Hints",
+        "Post-hint inference"
+    ]
+
+    plt.figure(figsize=(8, 6))
+    plt.boxplot(data, labels=labels, showfliers=show_fliers)
+
+    plt.ylabel("Generated tokens")
+    plt.title(title, fontweight="bold")
+    plt.grid(True, alpha=0.3, axis="y")
+    plt.tight_layout()
+    plt.show()
