@@ -13,6 +13,10 @@ def plot_by_dataset(data, metric_col, ylabel, title, share_y=False):
     - share_y controls shared vs per-dataset y scale
     """
 
+    # --- Convert max_tokens like "max256" -> 256 ---
+    data = data.copy()
+    data["max_tokens_int"] = data["max_tokens"].str.replace("max", "", regex=False).astype(int)
+
     # --- Figure setup ---
     fig, axes = plt.subplots(2, 3, figsize=(18, 10), sharey=share_y)
     fig.suptitle(title, fontsize=16, fontweight='bold')
@@ -31,13 +35,15 @@ def plot_by_dataset(data, metric_col, ylabel, title, share_y=False):
         dataset_data = data[data['dataset'] == dataset]
 
         for model in dataset_data['model_short'].unique():
-            model_data = dataset_data[dataset_data['model_short'] == model].sort_values('max_tokes')
+            model_data = dataset_data[
+                dataset_data['model_short'] == model
+            ].sort_values('max_tokens_int')
 
             category = model_data['model_category'].iloc[0]
             marker = 'o' if category == 'Reasoning' else 's'
 
             ax.plot(
-                model_data['max_tokes'],
+                model_data['max_tokens_int'],
                 model_data[metric_col],
                 marker=marker,
                 linewidth=1.8,
@@ -50,11 +56,12 @@ def plot_by_dataset(data, metric_col, ylabel, title, share_y=False):
         ax.set_xlabel('Max Tokens')
         ax.grid(True, alpha=0.3)
 
-        # If y is NOT shared, each subplot should label its own y-axis
+        # Force integer ticks on x-axis
+        ax.set_xticks(sorted(dataset_data["max_tokens_int"].unique()))
+
         if not share_y:
             ax.set_ylabel(ylabel)
 
-    # If y IS shared, label only the left column (cleaner)
     if share_y:
         axes[0, 0].set_ylabel(ylabel)
         axes[1, 0].set_ylabel(ylabel)
@@ -153,3 +160,209 @@ def plot_aggregated_metric_by_dataset(
 
     plt.tight_layout()
     plt.show()
+
+import matplotlib.pyplot as plt
+
+def plot_model_category_comparison(aggregated_metrics, title_suffix="Averaged Across All Datasets"):
+    
+    # Aggregate by model category
+    category_comparison = aggregated_metrics.groupby('model_category').agg({
+        'initial_accuracy': 'mean',
+        'correction_rate': 'mean',
+        'delta_accuracy': 'mean',
+        'n_corrected': 'sum',
+        'n_incorrect_initial': 'sum'
+    }).reset_index()
+
+    # Plot setup
+    fig, axes = plt.subplots(1, 4, figsize=(20, 5))
+    fig.suptitle(
+        f'Reasoning vs Non-Reasoning Models ({title_suffix})',
+        fontsize=14,
+        fontweight='bold'
+    )
+
+    metrics_names = [
+        'initial_accuracy',
+        'correction_rate',
+        'n_corrected',
+        'delta_accuracy'
+    ]
+
+    titles = [
+        'Initial Accuracy',
+        'Correction Rate',
+        'Total Corrections',
+        'Delta Accuracy'
+    ]
+
+    for idx, (metric, title) in enumerate(zip(metrics_names, titles)):
+        ax = axes[idx]
+
+        categories = category_comparison['model_category']
+        values = category_comparison[metric]
+
+        bars = ax.bar(
+            categories,
+            values,
+            color=['#ff7f0e', '#1f77b4'],
+            edgecolor='black',
+            linewidth=1.5,
+            width=0.6
+        )
+
+        # Value labels
+        for bar in bars:
+            height = bar.get_height()
+            if metric == 'n_corrected':
+                label = f'{int(height)}'
+            else:
+                label = f'{height:.4f}'
+
+            ax.text(
+                bar.get_x() + bar.get_width() / 2.0,
+                height,
+                label,
+                ha='center',
+                va='bottom',
+                fontsize=11,
+                fontweight='bold'
+            )
+
+        ax.set_ylabel(title, fontsize=11, fontweight='bold')
+        ax.set_xlabel('Model Category', fontsize=11, fontweight='bold')
+        ax.set_title(title, fontsize=12, fontweight='bold')
+        ax.grid(True, alpha=0.3, axis='y')
+
+    plt.tight_layout()
+    plt.show()
+
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+def plot_metric_heatmap(
+    df,
+    value_col,
+    *,
+    index_col="model_short",
+    columns_col="dataset",
+    title=None,
+    xlabel="Dataset",
+    ylabel="Model",
+    figsize=(12, 8),
+    annot=True,
+    fmt=".3f",
+    cmap="YlOrRd",
+    linewidths=0.5,
+    cbar_label=None,
+    sort_index=True,
+    sort_columns=True
+):
+    """
+    Universal heatmap for aggregated metrics (or any df) using pivot(index_col, columns_col, value_col).
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+    value_col : str
+        Column to plot as heatmap values.
+    index_col : str
+        Rows (e.g., 'model_short').
+    columns_col : str
+        Columns (e.g., 'dataset').
+    title : str | None
+        Plot title.
+    cbar_label : str | None
+        Colorbar label (defaults to value_col if not provided).
+    sort_index, sort_columns : bool
+        Whether to sort row/column labels.
+    """
+
+    pivot = df.pivot(index=index_col, columns=columns_col, values=value_col)
+
+    if sort_index:
+        pivot = pivot.sort_index()
+    if sort_columns:
+        pivot = pivot.reindex(sorted(pivot.columns), axis=1)
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    sns.heatmap(
+        pivot,
+        annot=annot,
+        fmt=fmt,
+        cmap=cmap,
+        linewidths=linewidths,
+        cbar_kws={"label": cbar_label or value_col},
+        ax=ax
+    )
+
+    ax.set_title(title or f"{value_col} Heatmap", fontsize=14, fontweight="bold")
+    ax.set_xlabel(xlabel, fontsize=12, fontweight="bold")
+    ax.set_ylabel(ylabel, fontsize=12, fontweight="bold")
+
+    plt.tight_layout()
+    plt.show()
+
+import matplotlib.pyplot as plt
+
+def plot_accuracy_vs_correction_scatter(
+    df,
+    x_col="initial_accuracy",
+    y_col="post_hint_accuracy",
+    category_col="model_category",
+    title=None,
+    xlabel="Initial Accuracy",
+    ylabel="Correction Rate (% Incorrect Corrected)",
+    figsize=(12, 8),
+    alpha=0.6,
+    size=100,
+    markers=None,
+    edgecolor="black",
+    linewidth=0.5,
+    grid_alpha=0.3
+):
+    """
+    Universal scatter plot for accuracy vs correction-style analyses.
+    """
+
+    if markers is None:
+        markers = {
+            "Reasoning": "o",
+            "Non-Reasoning": "s"
+        }
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    for category in df[category_col].unique():
+        sub = df[df[category_col] == category]
+
+        marker = markers.get(category, "o")
+
+        ax.scatter(
+            sub[x_col],
+            sub[y_col],
+            label=category,
+            alpha=alpha,
+            s=size,
+            marker=marker,
+            edgecolors=edgecolor,
+            linewidth=linewidth
+        )
+
+    ax.set_xlabel(xlabel, fontsize=12, fontweight="bold")
+    ax.set_ylabel(ylabel, fontsize=12, fontweight="bold")
+
+    ax.set_title(
+        title or f"{x_col} vs {y_col}",
+        fontsize=14,
+        fontweight="bold"
+    )
+
+    ax.legend(fontsize=11)
+    ax.grid(True, alpha=grid_alpha)
+
+    plt.tight_layout()
+    plt.show()
+
