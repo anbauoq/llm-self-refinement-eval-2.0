@@ -22,7 +22,7 @@ def plot_by_dataset(data, metric_col, ylabel, title, share_y=False):
     fig.suptitle(title, fontsize=16, fontweight='bold')
 
     datasets = sorted(data['dataset'].unique())
-    models = data['model_short'].unique()
+    models = data['model'].unique()
 
     # Color map for models (consistent across plots)
     cmap = plt.get_cmap('tab10')
@@ -34,9 +34,9 @@ def plot_by_dataset(data, metric_col, ylabel, title, share_y=False):
 
         dataset_data = data[data['dataset'] == dataset]
 
-        for model in dataset_data['model_short'].unique():
+        for model in dataset_data['model'].unique():
             model_data = dataset_data[
-                dataset_data['model_short'] == model
+                dataset_data['model'] == model
             ].sort_values('max_tokens_int')
 
             category = model_data['model_category'].iloc[0]
@@ -107,14 +107,14 @@ def plot_aggregated_metric_by_dataset(
     x = np.arange(len(datasets_sorted))
     width = 0.08
 
-    models = aggregated_metrics['model_short'].unique()
+    models = aggregated_metrics['model'].unique()
 
     colors_reasoning = plt.cm.Set1(np.linspace(0, 0.5, len(models)))
     colors_non_reasoning = plt.cm.Set2(np.linspace(0, 0.5, len(models)))
 
     for i, model in enumerate(models):
         model_data = aggregated_metrics[
-            aggregated_metrics['model_short'] == model
+            aggregated_metrics['model'] == model
         ]
         model_category = model_data['model_category'].iloc[0]
 
@@ -161,7 +161,6 @@ def plot_aggregated_metric_by_dataset(
     plt.tight_layout()
     plt.show()
 
-import matplotlib.pyplot as plt
 
 def plot_model_category_comparison(aggregated_metrics, title_suffix="Averaged Across All Datasets"):
     
@@ -238,14 +237,11 @@ def plot_model_category_comparison(aggregated_metrics, title_suffix="Averaged Ac
     plt.show()
 
 
-import matplotlib.pyplot as plt
-import seaborn as sns
-
 def plot_metric_heatmap(
     df,
     value_col,
     *,
-    index_col="model_short",
+    index_col="model",
     columns_col="dataset",
     title=None,
     xlabel="Dataset",
@@ -268,7 +264,7 @@ def plot_metric_heatmap(
     value_col : str
         Column to plot as heatmap values.
     index_col : str
-        Rows (e.g., 'model_short').
+        Rows (e.g., 'model').
     columns_col : str
         Columns (e.g., 'dataset').
     title : str | None
@@ -305,7 +301,6 @@ def plot_metric_heatmap(
     plt.tight_layout()
     plt.show()
 
-import matplotlib.pyplot as plt
 
 def plot_accuracy_vs_correction_scatter(
     df,
@@ -366,3 +361,124 @@ def plot_accuracy_vs_correction_scatter(
     plt.tight_layout()
     plt.show()
 
+
+def plot_four_category_boxplot(
+    data,
+    value_col,
+    title,
+    ylabel="Tokens",
+    show_fliers=False
+):
+    """
+    Creates boxplots for:
+    - Reasoning + Corrected
+    - Reasoning + Not corrected
+    - Non-Reasoning + Corrected
+    - Non-Reasoning + Not corrected
+
+    Parameters:
+        data : DataFrame (per_question_tokens)
+        value_col : column to plot (e.g. 'hint_tokens')
+        title : plot title
+        ylabel : y-axis label
+        show_fliers : whether to show outliers
+    """
+
+    reasoning_corrected = data[
+        (data["model_category"] == "Reasoning") &
+        (data["hint_outcome"] == "Corrected")
+    ][value_col]
+
+    reasoning_not = data[
+        (data["model_category"] == "Reasoning") &
+        (data["hint_outcome"] == "Not corrected")
+    ][value_col]
+
+    nonreasoning_corrected = data[
+        (data["model_category"] == "Non-Reasoning") &
+        (data["hint_outcome"] == "Corrected")
+    ][value_col]
+
+    nonreasoning_not = data[
+        (data["model_category"] == "Non-Reasoning") &
+        (data["hint_outcome"] == "Not corrected")
+    ][value_col]
+
+    data_to_plot = [
+        reasoning_corrected,
+        reasoning_not,
+        nonreasoning_corrected,
+        nonreasoning_not,
+    ]
+
+    labels = [
+        "Reasoning\nCorrected",
+        "Reasoning\nNot corrected",
+        "Non-Reasoning\nCorrected",
+        "Non-Reasoning\nNot corrected",
+    ]
+
+    plt.figure(figsize=(10, 6))
+    plt.boxplot(data_to_plot, labels=labels, showfliers=show_fliers)
+
+    plt.title(title, fontweight="bold")
+    plt.ylabel(ylabel)
+    plt.grid(True, alpha=0.3, axis="y")
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_tokens_boxplot(
+    df,
+    value_col,
+    group_col,
+    title=None,
+    ylabel="Tokens",
+    show_fliers=False,
+    sort="alpha",
+    rotation=45,
+    figsize=(12, 6),
+):
+    """
+    Universal boxplot:
+      - df: DataFrame (e.g., per_question_tokens)
+      - value_col: numeric column to plot (e.g., "hint_tokens")
+      - group_col: column to group by (e.g., "model", "dataset", "model_category", "max_tokens")
+      - sort: "alpha" (label order) or "median" (by median of value_col)
+    """
+
+    if group_col not in df.columns:
+        raise KeyError(f"'{group_col}' not found in df columns.")
+    if value_col not in df.columns:
+        raise KeyError(f"'{value_col}' not found in df columns.")
+
+    sub = df[[group_col, value_col]].dropna()
+
+    # Determine group order
+    groups = sub[group_col].astype(str)
+    sub = sub.assign(_group=groups)
+
+    if sort == "median":
+        order = (
+            sub.groupby("_group")[value_col]
+            .median()
+            .sort_values(ascending=True)
+            .index.tolist()
+        )
+    else:  # "alpha"
+        order = sorted(sub["_group"].unique())
+
+    data = [sub.loc[sub["_group"] == g, value_col].values for g in order]
+
+    if title is None:
+        title = f"{value_col} by {group_col}"
+
+    plt.figure(figsize=figsize)
+    plt.boxplot(data, labels=order, showfliers=show_fliers)
+    plt.xticks(rotation=rotation, ha="right")
+
+    plt.ylabel(ylabel)
+    plt.title(title, fontweight="bold")
+    plt.grid(True, alpha=0.3, axis="y")
+    plt.tight_layout()
+    plt.show()
