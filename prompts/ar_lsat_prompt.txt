@@ -1,0 +1,101 @@
+Your goal is to answer the multiple-choice question by showing short step-by-step reasoning between <think> and </think> and writing the final answer choice between <ans> </ans>.
+
+You MUST output exactly two blocks, in this order, with no extra text before, between, or after them:
+<think>step-by-step reasoning</think>
+<ans>X</ans>
+
+Rules:
+- X must be exactly one uppercase letter: A, B, C, D, or E.
+- Do NOT repeat the question, options, or any example text.
+- Do NOT output anything else after stating the final answer.
+
+The following are examples of correctly formatted outputs, you must NOT echo those examples or continue providing your own examples.
+
+Example 1:
+Question: Five speakers—Alex, Blair, Casey, Devin, and Erin—will each give one talk at a one-day conference. The conference has five consecutive time slots, numbered 1 through 5, from earliest to latest. The following conditions apply:
+1. Alex speaks earlier than Blair.
+2. Casey speaks immediately before Devin.
+3. Erin does not speak in the first time slot.
+Which one of the following could be the order of the speakers from the first to the fifth time slot?
+A) Slot 1: Alex;  Slot 2: Blair;  Slot 3: Devin; Slot 4: Casey; Slot 5: Erin
+B) Slot 1: Erin;  Slot 2: Alex;  Slot 3: Casey; Slot 4: Devin; Slot 5: Blair
+C) Slot 1: Casey; Slot 2: Devin; Slot 3: Alex;  Slot 4: Blair; Slot 5: Erin
+D) Slot 1: Casey; Slot 2: Alex;  Slot 3: Devin; Slot 4: Blair; Slot 5: Erin
+E) Slot 1: Blair; Slot 2: Alex;  Slot 3: Casey; Slot 4: Devin; Slot 5: Erin
+<think>Casey must be immediately before Devin, so eliminate any option that doesn’t contain the consecutive block “Casey; Devin” in that order. That leaves B, C, and E. E violates “Alex earlier than Blair” (Blair is before Alex), so remove E. B violates “Erin not in slot 1” (Erin is first), so remove B. C has Casey–Devin consecutive, Alex before Blair, and Erin not first, so it satisfies all conditions.</think>
+<ans>C</ans>
+
+Example 2:
+Question: Four workshops—Data, Ethics, Finance, and Law—are scheduled, one per day, on four consecutive days from Monday through Thursday. Each workshop is held exactly once. The following conditions apply:
+1. Data is held earlier in the week than Finance.
+2. Ethics is not held on Monday.
+3. Law is not held on Thursday.
+Which one of the following could be the schedule of workshops from Monday through Thursday?
+A) Mon: Data;  Tue: Ethics; Wed: Law;   Thu: Finance
+B) Mon: Ethics; Tue: Finance; Wed: Data;  Thu: Law
+C) Mon: Data;  Tue: Ethics;    Wed: Finance; Thu: Law
+D) Mon: Finance; Tue: Data; Wed: Ethics;  Thu: Law
+E) Mon: Law;    Tue: Finance; Wed: Ethics; Thu: Data
+<think>Data must be earlier than Finance, Ethics cannot be Monday, and Law cannot be Thursday. In A, Data is Monday, Ethics Tuesday, Law Wednesday, Finance Thursday, so all three rules are satisfied. B fails because Ethics is on Monday, C and D fail because Law is on Thursday, and D and E also fail because Data is not earlier than Finance. Therefore only A could be the schedule.</think>
+<ans>A</ans>
+
+Example 3:
+Question: A committee of exactly three people is to be formed from four candidates: Rosa, Sam, Tariq, and Uma. The following conditions apply:
+1. Sam must be on the committee.
+2. If Rosa is on the committee, Tariq is not on the committee.
+3. Uma cannot be on the committee unless Rosa is also on the committee.
+Which of the following could be the complete set of committee members?
+A) Rosa, Sam, Tariq
+B) Sam, Tariq, Uma
+C) Rosa, Sam, Uma
+D) Sam only
+E) Rosa, Tariq, Uma
+<think>Sam must be included. Uma requires Rosa, and Rosa cannot be with Tariq. So A and E fail (Rosa+Tariq), B fails (Uma without Rosa), and D fails (not 3 people). Only C has Sam and includes Uma with Rosa while excluding Tariq, so it works.</think>
+<ans>C</ans>
+
+Example 4:
+Question: Three houses—A, B, and C—are each painted a different color, chosen from exactly red, green, and blue. No two houses share the same color. The following conditions apply:
+1. House A is not painted red.
+2. House B is not painted blue.
+3. House C is painted either green or blue.
+Which one of the following could be the assignment of colors to the houses A, B, and C?
+A) A: red;    B: green; C: blue
+B) A: red;    B: blue;  C: green
+C) A: green;  B: red;   C: blue
+D) A: blue;   B: blue;  C: red
+E) A: green;  B: blue;  C: red
+<think>Test each option against the rules: A is invalid because A is red, B is invalid because A is red, D is invalid because A and B are both blue so the colors are not all different, and E is invalid because C is red instead of green or blue; C has A = green (not red), B = red (not blue), and C = blue (green/blue allowed) with all three colors distinct, so it is the only option that satisfies every condition.</think>
+<ans>C</ans>
+
+Example 5:
+Question: Three packages—J, K, and L—are each shipped on a different day, on three consecutive days from Monday through Wednesday. The following conditions apply:
+1. K is shipped earlier than J.
+2. L is not shipped on Monday.
+Which one of the following must be true?
+A) J is shipped on Monday.
+B) J is shipped on Wednesday.
+C) K is shipped on Monday.
+D) L is shipped on Tuesday.
+E) L is shipped on Wednesday.
+
+<think>L cannot be Monday. Case 1: L is Tuesday. Then K and J must use Monday and Wednesday with K earlier than J, so K Monday, J Wednesday. Case 2: L is Wednesday. Then K and J must use Monday and Tuesday with K earlier than J, so K Monday, J Tuesday. In all valid schedules K is always on Monday, while J and L can vary, so the only statement that must always be true is that K is shipped on Monday which is option C.</think>
+<ans>C</ans>
+
+Example 6:
+Question: Four books—G, H, J, and K—are to be arranged in a row on a shelf from left to right. Each position holds exactly one book. The following conditions apply:
+1. H is somewhere to the left of J.
+2. K is immediately to the right of H.
+3. G is not at either end of the row.
+Which one of the following could be the order of the books from left to right?
+A) G, H, K, J
+B) H, K, G, J
+C) H, G, K, J
+D) J, H, K, G
+E) G, H, J, K
+<think>H and K must be consecutive as “H, K”, and J must be somewhere to the right of H. Also G can’t be at an end. A and E fail since G is first; C fails since H and K aren’t adjacent; D fails since J is left of H. Only B fits all rules.</think>
+<ans>B</ans>
+
+----
+Answer the following single question. On the last line return only the correct option letter (A–E). Do NOT output anything else after stating the final answer to this question.
+
+Question: {question}

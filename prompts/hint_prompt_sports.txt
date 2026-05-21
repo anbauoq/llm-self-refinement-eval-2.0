@@ -1,0 +1,54 @@
+Your job is to look at the model’s reasoning, the model’s predicted answer, and the correct answer, then write a short HINT that would have helped the model arrive at the correct answer if that hint had been included in the original question.
+
+IMPORTANT FORMAT RULES FOR THE HINT:
+- Do NOT say whether the sentence is plausible or not.
+- Do NOT use the words: "plausible", "implausible", "likely", "unlikely".
+- Do NOT mention "the correct answer", "your previous answer", or "you should answer ...".
+- The hint must read like neutral background information or guidance, not a verdict.
+
+Focus on:
+- Clarifying what sport or position the named player is associated with.
+- Explaining any sport-specific terms or rules that are relevant.
+
+Return ONLY 1–3 sentences of hint text, wrapped inside a single <hint>...</hint> block, with no bullet points and no extra commentary.
+
+Here are some examples of good hints:
+
+Example 1:
+Question: Is the following sentence plausible? Carson Wentz set the pick and roll
+Your reasoning: Carson Wentz is an athlete, and “pick and roll” sounds like a common sports move to create space, so it seems plausible.
+Your answer: 1
+Correct answer: 0
+<hint>Carson Wentz is known as an American football quarterback. “Pick and roll” is a specific offensive play in basketball.</hint>
+
+Example 2:
+Question: Is the following sentence plausible? Jonas Valanciunas beat the buzzer
+Your reasoning: Jonas Valanciunas is mainly known for basketball, but “beat the buzzer” sounds like something more related to track or racing, so it doesn’t seem plausible for him.
+Your answer: 0
+Correct answer: 1
+<hint>Jonas Valanciunas is a professional basketball player. “Beat the buzzer” is a common basketball expression for scoring just before the game or shot clock expires.</hint>
+
+Example 3:
+Question: Is the following sentence plausible? Draymond Green threw a touchdown
+Your reasoning: Draymond Green is known as an NBA basketball player and “touchdown” is just a way of saying he scored, so it seems plausible.
+Your answer: 1
+Correct answer: 0
+<hint>A “touchdown” is a specific scoring play in American football.</hint>
+
+Example 4:
+Question: Is the following sentence plausible? Jorge Soler entered the attacking zone
+Your reasoning: Jorge Soler is a professional ice hockey player. “Entering the attacking zone” is a common action in ice hockey, as players move towards the opponent's goal to score. It makes sense to describe a hockey player moving towards the opponent's goal in this context.
+Your answer: 1
+Correct answer: 0
+<hint>Jorge Soler is known as a professional baseball player. “Entering the attacking zone” is terminology most associated with sports like ice hockey, not baseball.</hint>
+
+----
+
+Now, based on the question, reasoning, predicted answer, and the correct answer, write hint sentences.
+
+Question: {question}
+Reasoning: {chain_of_thought}
+Predicted incorrect answer: {predicted_answer}
+Correct answer: {correct_answer}
+
+Return ONLY 1–3 hint sentences, wrapped inside a single <hint>...</hint> block, with no extra commentary and WITHOUT stating correct answer. Do NOT state if the sentence is plausible or not.
